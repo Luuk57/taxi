@@ -174,7 +174,7 @@
       <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #334155;">Ritten Overzicht (Eerstvolgende bovenaan)</div>
       
       <div class="receipt" id="receiptList">
-        <div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Geen ritten ingepland</div>
+        <div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Verbinding maken met cloud...</div>
       </div>
     </div>
 
@@ -289,7 +289,7 @@
         document.getElementById('newBestemmingInput').value = "";
         initUI();
         document.getElementById('bestemmingSelect').value = val;
-        saveAndSync("Bestemming toegevoegd!");
+        saveAndSync("Bestemming toegevoegd! ✅");
       }
     }
 
@@ -300,7 +300,7 @@
         document.getElementById('newBedrijfInput').value = "";
         initUI();
         document.getElementById('bedrijfSelect').value = val;
-        saveAndSync("Bedrijf toegevoegd!");
+        saveAndSync("Bedrijf toegevoegd! ✅");
       }
     }
 
@@ -485,9 +485,8 @@
     }
 
     function saveAndSync(msg) {
-      document.getElementById('statusMsg').innerText = "Opslaan...";
+      document.getElementById('statusMsg').innerText = "Opslaan naar cloud...";
       
-      // Direct opslaan naar JSONbin
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
         headers: { 
@@ -517,10 +516,16 @@
       })
       .then(res => res.json())
       .then(data => {
-        if(data && data.record && Array.isArray(data.record.ritten)) {
-          appData = data.record;
-          initUI();
-          updateUI();
+        if(data && data.record) {
+          // Als de bin geldige data bevat met ritten, neem het over
+          if(Array.isArray(data.record.ritten)) {
+            appData = data.record;
+            initUI();
+            updateUI();
+          } else {
+            // Als de bin leeg is, schrijf onze standaard data er direct naar toe zodat hij vult
+            saveAndSync("Cloud geïnitialiseerd!");
+          }
         }
       })
       .catch(err => console.error("Laadfout:", err));
@@ -529,7 +534,7 @@
     // Direct laden bij opstarten
     loadFromCloud();
 
-    // Automatisch verversen zodat wijzigingen van de tablet of telefoon direct binnenkomen
+    // Automatisch verversen zodat wijzigingen binnenkomen
     setInterval(loadFromCloud, 4000);
   </script>
 </body>
