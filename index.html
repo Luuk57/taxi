@@ -427,7 +427,7 @@
 
     function renderTrips() {
       const container = document.getElementById('tripsList');
-      document.getElementById('tripCount').innerText = appData.ritten.length;
+      document.getElementById('tripCount').innerText = appData.ritten ? appData.ritten.length : 0;
 
       if (!appData.ritten || appData.ritten.length === 0) {
         container.innerHTML = `<div class="empty-state">Geen ritten gepland</div>`;
@@ -450,8 +450,8 @@
           <div class="trip-info">
             <div class="trip-time">${formattedDate}</div>
             <div class="trip-meta">
-              <span class="badge badge-dest">${trip.bestemming}</span>
-              <span class="badge badge-comp">${trip.bedrijf}</span>
+              <span class="badge badge-dest">${trip.bestemming || ''}</span>
+              <span class="badge badge-comp">${trip.bedrijf || ''}</span>
             </div>
           </div>
           <div class="trip-actions">
@@ -576,9 +576,12 @@
     }
 
     function syncData(successMsg = "Opgeslagen! ✅") {
-      if (isSaving) return;
       isSaving = true;
       setStatus('', 'Opslaan...');
+
+      // Direct lokaal renderen voor directe respons op het apparaat zelf
+      initDropdowns();
+      renderTrips();
 
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
@@ -608,6 +611,7 @@
     }
 
     function loadData(manual = false) {
+      if (isSaving) return; // Niet pollen tijdens het opslaan om conflicten te vermijden
       if (manual) setStatus('', 'Vernieuwen...');
       
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
@@ -618,9 +622,10 @@
       })
       .then(res => res.json())
       .then(data => {
-        // JSONBin v3 slaat data op onder .record
+        if (isSaving) return;
         let payload = data.record || data;
         if (payload && Array.isArray(payload.ritten)) {
+          // Alleen bijwerken als er data aanwezig is
           appData = payload;
           setStatus('online', 'Online');
           initDropdowns();
@@ -638,9 +643,9 @@
     }
 
     updateHeaderDate();
-    loadData();
-    // Automatisch elke 4 seconden controleren of er op een ander apparaat iets is gewijzigd
-    setInterval(loadData, 4000);
+    loadData(true);
+    // Automatisch controleren op wijzigingen van andere apparaten elke 5 seconden
+    setInterval(loadData, 5000);
   </script>
 </body>
 </html>
