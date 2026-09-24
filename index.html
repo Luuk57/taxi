@@ -271,25 +271,34 @@
 
     function setLiveTime(target) {
       let now = new Date();
-      let tzOffset = now.getTimezoneOffset() * 60000;
-      let localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
+      let year = now.getFullYear();
+      let month = String(now.getMonth() + 1).padStart(2, '0');
+      let day = String(now.getDate()).padStart(2, '0');
+      let hours = String(now.getHours()).padStart(2, '0');
+      let minutes = String(now.getMinutes()).padStart(2, '0');
+      let localString = `${year}-${month}-${day}T${hours}:${minutes}`;
+
       if(target === 'start') {
-        document.getElementById('startInput').value = localISOTime;
+        document.getElementById('startInput').value = localString;
       } else {
-        document.getElementById('eindInput').value = localISOTime;
+        document.getElementById('eindInput').value = localString;
       }
     }
 
     function fetchData() {
-      // Voeg een unieke tijdstempel toe (?t=...) zodat de browser de data niet uit het geheugen laadt, maar echt van internet haalt
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?t=${new Date().getTime()}`, {
         headers: { 'X-Master-Key': MASTER_KEY }
       })
       .then(res => res.json())
       .then(data => {
-        cloudData = data.record || { ritten: [] };
-        if(!cloudData.ritten) cloudData.ritten = [];
-        updateUI();
+        let remoteData = data.record || { ritten: [] };
+        if(!remoteData.ritten) remoteData.ritten = [];
+        
+        // Alleen bijwerken als de data daadwerkelijk anders is om knipperen te voorkomen
+        if(JSON.stringify(remoteData) !== JSON.stringify(cloudData)) {
+          cloudData = remoteData;
+          updateUI();
+        }
       })
       .catch(err => {
         console.error("Fout bij ophalen:", err);
@@ -356,8 +365,9 @@
       });
 
       if(herhaling !== 'geen' && eindHerhaling) {
-        let currDate = new Date(afspraak);
-        let endDate = new Date(eindHerhaling);
+        let baseDate = new Date(afspraak);
+        let endDate = new Date(eindHerhaling + "T23:59:59");
+        let currDate = new Date(baseDate);
 
         while(true) {
           if(herhaling === 'dag') currDate.setDate(currDate.getDate() + 1);
@@ -373,11 +383,34 @@
 
           if(currDate > endDate) break;
 
-          let isoStr = currDate.toISOString().slice(0, 16);
+          // Hulpfunctie om te voorkomen dat de tijd verspringt door tijdzones
+          let y = currDate.getFullYear();
+          let m = String(currDate.getMonth() + 1).padStart(2, '0');
+          let d = String(currDate.getDate()).padStart(2, '0');
+          let hr = String(baseDate.getHours()).padStart(2, '0');
+          let min = String(baseDate.getMinutes()).padStart(2, '0');
+          let isoStr = `${y}-${m}-${d}T${hr}:${min}`;
+
+          let startStr = "";
+          if(start) {
+            let sDate = new Date(start);
+            let shr = String(sDate.getHours()).padStart(2, '0');
+            let smin = String(sDate.getMinutes()).padStart(2, '0');
+            startStr = `${y}-${m}-${d}T${shr}:${smin}`;
+          }
+
+          let eindStr = "";
+          if(eind) {
+            let eDate = new Date(eind);
+            let ehr = String(eDate.getHours()).padStart(2, '0');
+            let emin = String(eDate.getMinutes()).padStart(2, '0');
+            eindStr = `${y}-${m}-${d}T${ehr}:${emin}`;
+          }
+
           cloudData.ritten.push({
             afspraak: isoStr,
-            start: start ? isoStr : '',
-            eind: eind ? isoStr : '',
+            start: startStr,
+            eind: eindStr,
             bestemming,
             bedrijf,
             afgehandeld: false
@@ -424,8 +457,8 @@
     initUI();
     fetchData();
 
-    // Automatisch elke 6 seconden controleren op wijzigingen op andere apparaten
-    setInterval(fetchData, 6000);
+    // Controleer elke 4 seconden of er op het andere apparaat iets is gewijzigd
+    setInterval(fetchData, 4000);
   </script>
 </body>
 </html>
