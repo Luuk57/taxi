@@ -34,7 +34,6 @@
     }
     .container { width: 100%; max-width: 100%; }
     
-    /* Stijl voor de twee duidelijke 'formulieren' onder elkaar */
     .form-section {
       background: var(--card-bg);
       border: 2px solid var(--border);
@@ -68,15 +67,6 @@
       font-weight: 700;
       color: var(--primary);
       text-transform: capitalize;
-    }
-    .btn-sync-now {
-      background: #e2e8f0;
-      border: none;
-      border-radius: 4px;
-      font-size: 9px;
-      padding: 3px 6px;
-      cursor: pointer;
-      font-weight: bold;
     }
     
     label {
@@ -176,20 +166,19 @@
 <body>
   <div class="container">
     
-    <!-- FORMULIER 1: OVERZICHT VAN RITTEN -->
+    <!-- SECTIE 1: OVERZICHT -->
     <div class="form-section">
       <div class="section-title">
         <span class="date-header" id="currentDateStr">Laden...</span>
-        <button class="btn-sync-now" onclick="fetchData(true)">🔄 Nu Verversen</button>
       </div>
       <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #334155;">Ritten Overzicht (Eerstvolgende bovenaan)</div>
       
       <div class="receipt" id="receiptList">
-        <div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Gegevens ophalen...</div>
+        <div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Geen ritten ingepland</div>
       </div>
     </div>
 
-    <!-- FORMULIER 2: RIT INPLANNEN / BEWERKEN -->
+    <!-- SECTIE 2: INVOER / BEWERKEN -->
     <div class="form-section" id="inputFormCard">
       <div class="section-title" id="formTitle">Nieuwe Rit Inplannen</div>
       
@@ -250,17 +239,13 @@
     const BIN_ID = '6ab4ec9dff5d1605329c8e3';
     const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
 
-    let cloudData = JSON.parse(localStorage.getItem('taxi_app_backup')) || { 
+    let appData = { 
       ritten: [], 
       bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"], 
       bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"] 
     };
 
     let editingIndex = null;
-
-    function saveLocalBackup() {
-      localStorage.setItem('taxi_app_backup', JSON.stringify(cloudData));
-    }
 
     function renderDate() {
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
@@ -273,55 +258,49 @@
       let bSelect = document.getElementById('bestemmingSelect');
       let currentB = bSelect.value;
       bSelect.innerHTML = "";
-      if(!cloudData.bestemmingen) cloudData.bestemmingen = ["Ziekenhuis", "Therapie", "Centrum"];
-      
-      cloudData.bestemmingen.forEach(b => {
+      appData.bestemmingen.forEach(b => {
         let opt = document.createElement('option');
         opt.value = b;
         opt.innerText = b;
         bSelect.appendChild(opt);
       });
-      if(currentB && cloudData.bestemmingen.includes(currentB)) {
+      if(currentB && appData.bestemmingen.includes(currentB)) {
         bSelect.value = currentB;
       }
 
       let cSelect = document.getElementById('bedrijfSelect');
       let currentC = cSelect.value;
       cSelect.innerHTML = "";
-      if(!cloudData.bedrijven) cloudData.bedrijven = ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"];
-
-      cloudData.bedrijven.forEach(c => {
+      appData.bedrijven.forEach(c => {
         let opt = document.createElement('option');
         opt.value = c;
         opt.innerText = c;
         cSelect.appendChild(opt);
       });
-      if(currentC && cloudData.bedrijven.includes(currentC)) {
+      if(currentC && appData.bedrijven.includes(currentC)) {
         cSelect.value = currentC;
       }
     }
 
     function addBestemming() {
       let val = document.getElementById('newBestemmingInput').value.trim();
-      if(val && !cloudData.bestemmingen.includes(val)) {
-        cloudData.bestemmingen.push(val);
+      if(val && !appData.bestemmingen.includes(val)) {
+        appData.bestemmingen.push(val);
         document.getElementById('newBestemmingInput').value = "";
-        saveLocalBackup();
         initUI();
         document.getElementById('bestemmingSelect').value = val;
-        syncCloud("Bestemming toegevoegd & gesynchroniseerd! ✅");
+        saveAndSync("Bestemming toegevoegd!");
       }
     }
 
     function addBedrijf() {
       let val = document.getElementById('newBedrijfInput').value.trim();
-      if(val && !cloudData.bedrijven.includes(val)) {
-        cloudData.bedrijven.push(val);
+      if(val && !appData.bedrijven.includes(val)) {
+        appData.bedrijven.push(val);
         document.getElementById('newBedrijfInput').value = "";
-        saveLocalBackup();
         initUI();
         document.getElementById('bedrijfSelect').value = val;
-        syncCloud("Bedrijf toegevoegd & gesynchroniseerd! ✅");
+        saveAndSync("Bedrijf toegevoegd!");
       }
     }
 
@@ -341,41 +320,12 @@
       }
     }
 
-    function fetchData(showFeedback = false) {
-      if(showFeedback) document.getElementById('statusMsg').innerText = "Verversen...";
-      
-      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
-        headers: { 
-          'X-Master-Key': MASTER_KEY,
-          'Cache-Control': 'no-cache'
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        let remoteData = data.record;
-        if(remoteData && Array.isArray(remoteData.ritten)) {
-          cloudData = remoteData;
-          saveLocalBackup();
-          initUI();
-          updateUI();
-        }
-        if(showFeedback) {
-          document.getElementById('statusMsg').innerText = "Bijgewerkt! ✅";
-          setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 1500);
-        }
-      })
-      .catch(err => {
-        console.error("Fout bij ophalen:", err);
-        if(showFeedback) document.getElementById('statusMsg').innerText = "Fout bij ophalen ❌";
-      });
-    }
-
     function updateUI() {
       let receiptContainer = document.getElementById('receiptList');
-      if (cloudData.ritten && cloudData.ritten.length > 0) {
+      if (appData.ritten && appData.ritten.length > 0) {
         receiptContainer.innerHTML = "";
 
-        let sortedRitten = [...cloudData.ritten].sort((a, b) => {
+        let sortedRitten = [...appData.ritten].sort((a, b) => {
           if (a.afgehandeld !== b.afgehandeld) {
             return a.afgehandeld ? 1 : -1;
           }
@@ -383,7 +333,7 @@
         });
 
         sortedRitten.forEach((item) => {
-          let origIndex = cloudData.ritten.indexOf(item);
+          let origIndex = appData.ritten.indexOf(item);
           let row = document.createElement('div');
           row.className = "receipt-item";
           if(item.afgehandeld) row.style.opacity = "0.5";
@@ -414,7 +364,7 @@
     }
 
     function laadRitVoorBewerking(index) {
-      let rit = cloudData.ritten[index];
+      let rit = appData.ritten[index];
       document.getElementById('afspraakInput').value = rit.afspraak || '';
       document.getElementById('startInput').value = rit.start || '';
       document.getElementById('eindInput').value = rit.eind || '';
@@ -446,8 +396,8 @@
       let eindHerhaling = document.getElementById('eindDatumHerhalingInput').value;
 
       if (editingIndex !== null) {
-        cloudData.ritten[editingIndex] = {
-          ...cloudData.ritten[editingIndex],
+        appData.ritten[editingIndex] = {
+          ...appData.ritten[editingIndex],
           afspraak, start, eind, bestemming, bedrijf
         };
         editingIndex = null;
@@ -456,9 +406,9 @@
         document.getElementById('submitBtn').classList.remove('editing');
         document.getElementById('inputFormCard').classList.remove('active-edit');
         document.getElementById('herhalingContainer').style.display = 'block';
-        syncCloud("Rit bijgewerkt & gesynchroniseerd! ✅");
+        saveAndSync("Rit bijgewerkt! ✅");
       } else {
-        cloudData.ritten.push({
+        appData.ritten.push({
           afspraak, start, eind, bestemming, bedrijf, afgehandeld: false
         });
 
@@ -504,7 +454,7 @@
               eindStr = `${y}-${m}-${d}T${ehr}:${emin}`;
             }
 
-            cloudData.ritten.push({
+            appData.ritten.push({
               afspraak: isoStr,
               start: startStr,
               eind: eindStr,
@@ -514,55 +464,73 @@
             });
           }
         }
-        syncCloud("Rit(ten) opgeslagen & gesynchroniseerd! ✅");
+        saveAndSync("Rit(ten) opgeslagen! ✅");
       }
 
-      saveLocalBackup();
       document.getElementById('afspraakInput').value = "";
       document.getElementById('startInput').value = "";
       document.getElementById('eindInput').value = "";
     }
 
     function toggleAfgehandeld(index) {
-      cloudData.ritten[index].afgehandeld = !cloudData.ritten[index].afgehandeld;
-      saveLocalBackup();
-      syncCloud("Status bijgewerkt!");
+      appData.ritten[index].afgehandeld = !appData.ritten[index].afgehandeld;
+      saveAndSync("Status bijgewerkt!");
     }
 
     function deleteRit(index) {
       if(confirm("Wil je deze rit verwijderen?")) {
-        cloudData.ritten.splice(index, 1);
-        saveLocalBackup();
-        syncCloud("Verwijderd! 🗑️");
+        appData.ritten.splice(index, 1);
+        saveAndSync("Verwijderd! 🗑️");
       }
     }
 
-    function syncCloud(msg) {
-      document.getElementById('statusMsg').innerText = "Opslaan naar cloud...";
+    function saveAndSync(msg) {
+      document.getElementById('statusMsg').innerText = "Opslaan...";
+      
+      // Direct opslaan naar JSONbin
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json', 
           'X-Master-Key': MASTER_KEY 
         },
-        body: JSON.stringify(cloudData)
+        body: JSON.stringify(appData)
       })
       .then(res => res.json())
-      .then(res => {
+      .then(() => {
         document.getElementById('statusMsg').innerText = msg;
         updateUI();
         setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 2000);
       })
       .catch(err => {
+        console.error(err);
         document.getElementById('statusMsg').innerText = "Fout bij opslaan ❌";
       });
     }
 
-    initUI();
-    updateUI();
-    fetchData();
+    function loadFromCloud() {
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
+        headers: { 
+          'X-Master-Key': MASTER_KEY,
+          'Cache-Control': 'no-cache'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if(data && data.record && Array.isArray(data.record.ritten)) {
+          appData = data.record;
+          initUI();
+          updateUI();
+        }
+      })
+      .catch(err => console.error("Laadfout:", err));
+    }
 
-    setInterval(() => fetchData(false), 5000);
+    // Direct laden bij opstarten
+    loadFromCloud();
+
+    // Automatisch verversen zodat wijzigingen van de tablet of telefoon direct binnenkomen
+    setInterval(loadFromCloud, 4000);
   </script>
 </body>
 </html>
