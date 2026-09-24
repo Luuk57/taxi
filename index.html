@@ -187,8 +187,8 @@
   </div>
 
   <script>
-    const BIN_ID = '6ab4ec9dff5d1605329c8e3';
-    const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
+    const BIN_ID = '6ab4ec9dffd5d1605329c8e3';
+    const MASTER_KEY = '6ab4ec9dffd5d1605329c8e3';
 
     let appData = { 
       ritten: [], 
@@ -280,7 +280,6 @@
       }
     }
 
-    // Direct opslaan naar JSONBin
     function slaOpInBin() {
       setStatus("syncing", "Opslaan...");
 
@@ -303,7 +302,6 @@
       });
     }
 
-    // Direct inladen vanuit JSONBin
     function laadVanBin(isManual = false) {
       if(isManual) setStatus("syncing", "Laden...");
 
@@ -456,7 +454,7 @@
       document.getElementById('eindInput').value = "";
       
       updateUI();
-      slaOpInBin(); // Slaat direct op in de bin!
+      slaOpInBin();
     }
 
     function toggleAfgehandeld(index) {
@@ -473,7 +471,6 @@
       }
     }
 
-    // Direct laden bij opstarten vanuit de bin
     laadVanBin(false);
   </script>
 </body>
