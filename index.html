@@ -47,6 +47,18 @@
       color: var(--primary);
       margin-bottom: 4px;
       text-transform: capitalize;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .btn-sync-now {
+      background: #e2e8f0;
+      border: none;
+      border-radius: 4px;
+      font-size: 9px;
+      padding: 2px 6px;
+      cursor: pointer;
+      font-weight: bold;
     }
     h3 { margin: 0 0 4px 0; font-size: 11px; color: var(--text); text-align: left; }
     
@@ -146,7 +158,10 @@
 <body>
   <div class="container">
     <div class="card">
-      <div class="date-header" id="currentDateStr">Laden...</div>
+      <div class="date-header">
+        <span id="currentDateStr">Laden...</span>
+        <button class="btn-sync-now" onclick="fetchData(true)">🔄 Nu Verversen</button>
+      </div>
       <h3 style="text-align: center; margin-bottom: 4px;">Ritten Overzicht (Eerstvolgende bovenaan)</h3>
       
       <div class="receipt" id="receiptList">
@@ -171,7 +186,6 @@
         </div>
       </div>
 
-      <!-- Live Start/Stop Knoppen om snel tijd in te vullen -->
       <div class="timer-row">
         <button class="btn-start" onclick="setLiveTime('start')">▶ Start Nu</button>
         <button class="btn-stop" onclick="setLiveTime('eind')">⏹ Stop Nu</button>
@@ -285,23 +299,31 @@
       }
     }
 
-    function fetchData() {
-      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?t=${new Date().getTime()}`, {
-        headers: { 'X-Master-Key': MASTER_KEY }
+    function fetchData(showFeedback = false) {
+      if(showFeedback) document.getElementById('statusMsg').innerText = "Verversen...";
+      
+      // We voegen een uniek getal toe achter de URL zodat de browser niet uit het geheugen laadt
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
+        headers: { 
+          'X-Master-Key': MASTER_KEY,
+          'Cache-Control': 'no-cache'
+        }
       })
       .then(res => res.json())
       .then(data => {
         let remoteData = data.record || { ritten: [] };
         if(!remoteData.ritten) remoteData.ritten = [];
         
-        // Alleen bijwerken als de data daadwerkelijk anders is om knipperen te voorkomen
-        if(JSON.stringify(remoteData) !== JSON.stringify(cloudData)) {
-          cloudData = remoteData;
-          updateUI();
+        cloudData = remoteData;
+        updateUI();
+        if(showFeedback) {
+          document.getElementById('statusMsg').innerText = "Bijgewerkt! ✅";
+          setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 1500);
         }
       })
       .catch(err => {
         console.error("Fout bij ophalen:", err);
+        if(showFeedback) document.getElementById('statusMsg').innerText = "Fout bij ophalen ❌";
       });
     }
 
@@ -383,7 +405,6 @@
 
           if(currDate > endDate) break;
 
-          // Hulpfunctie om te voorkomen dat de tijd verspringt door tijdzones
           let y = currDate.getFullYear();
           let m = String(currDate.getMonth() + 1).padStart(2, '0');
           let d = String(currDate.getDate()).padStart(2, '0');
@@ -437,17 +458,20 @@
     }
 
     function syncCloud(msg) {
-      document.getElementById('statusMsg').innerText = "Opslaan...";
+      document.getElementById('statusMsg').innerText = "Opslaan naar cloud...";
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY },
+        headers: { 
+          'Content-Type': 'application/json', 
+          'X-Master-Key': MASTER_KEY 
+        },
         body: JSON.stringify(cloudData)
       })
       .then(res => res.json())
       .then(res => {
         document.getElementById('statusMsg').innerText = msg;
         updateUI();
-        setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 1500);
+        setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 2000);
       })
       .catch(err => {
         document.getElementById('statusMsg').innerText = "Fout bij opslaan ❌";
@@ -457,8 +481,8 @@
     initUI();
     fetchData();
 
-    // Controleer elke 4 seconden of er op het andere apparaat iets is gewijzigd
-    setInterval(fetchData, 4000);
+    // Automatische check elke 4 seconden
+    setInterval(() => fetchData(false), 4000);
   </script>
 </body>
 </html>
