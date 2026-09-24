@@ -68,6 +68,17 @@
       color: var(--primary);
       text-transform: capitalize;
     }
+
+    .btn-sync {
+      background: #e2e8f0;
+      border: none;
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: bold;
+      color: #334155;
+      cursor: pointer;
+    }
     
     label {
       display: block;
@@ -170,11 +181,12 @@
     <div class="form-section">
       <div class="section-title">
         <span class="date-header" id="currentDateStr">Laden...</span>
+        <button class="btn-sync" onclick="loadFromCloud(true)">🔄 Ververs Nu</button>
       </div>
       <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #334155;">Ritten Overzicht (Eerstvolgende bovenaan)</div>
       
       <div class="receipt" id="receiptList">
-        <div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Verbinding maken met cloud...</div>
+        <div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Laden uit cloud...</div>
       </div>
     </div>
 
@@ -359,7 +371,7 @@
           receiptContainer.appendChild(row);
         });
       } else {
-        receiptContainer.innerHTML = `<div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Geen ritten ingepland</div>`;
+        receiptContainer.innerHTML = `<div style="color: #94a3b8; text-align: center; font-size: 9px; padding: 10px;">Geen ritten ingepland in cloud</div>`;
       }
     }
 
@@ -485,7 +497,7 @@
     }
 
     function saveAndSync(msg) {
-      document.getElementById('statusMsg').innerText = "Opslaan naar cloud...";
+      document.getElementById('statusMsg').innerText = "Opslaan...";
       
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
@@ -507,7 +519,9 @@
       });
     }
 
-    function loadFromCloud() {
+    function loadFromCloud(showAlert = false) {
+      if(showAlert) document.getElementById('statusMsg').innerText = "Gegevens ophalen...";
+
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
         headers: { 
           'X-Master-Key': MASTER_KEY,
@@ -517,25 +531,30 @@
       .then(res => res.json())
       .then(data => {
         if(data && data.record) {
-          // Als de bin geldige data bevat met ritten, neem het over
-          if(Array.isArray(data.record.ritten)) {
-            appData = data.record;
+          // Haal de record data op (let op of JSONbin het in .record zet)
+          let cloudData = data.record;
+          if(cloudData && Array.isArray(cloudData.ritten)) {
+            appData = cloudData;
             initUI();
             updateUI();
-          } else {
-            // Als de bin leeg is, schrijf onze standaard data er direct naar toe zodat hij vult
-            saveAndSync("Cloud geïnitialiseerd!");
+            if(showAlert) {
+              document.getElementById('statusMsg').innerText = "Gescand & bijgewerkt! ✅";
+              setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 2000);
+            }
           }
         }
       })
-      .catch(err => console.error("Laadfout:", err));
+      .catch(err => {
+        console.error("Laadfout:", err);
+        if(showAlert) document.getElementById('statusMsg').innerText = "Fout bij laden ❌";
+      });
     }
 
     // Direct laden bij opstarten
-    loadFromCloud();
+    loadFromCloud(false);
 
-    // Automatisch verversen zodat wijzigingen binnenkomen
-    setInterval(loadFromCloud, 4000);
+    // Automatisch op de achtergrond verversen elke 5 seconden
+    setInterval(() => loadFromCloud(false), 5000);
   </script>
 </body>
 </html>
