@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Taxi & Ritten Planner</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #0f172a;
+      --border: #cbd5e1;
+      --danger: #ef4444;
+      --primary: #0284c7;
+      --success: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 6px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container { width: 100%; max-width: 100%; }
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 6px;
+      text-align: center;
+      width: 100%;
+    }
+    .date-header {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+      text-transform: capitalize;
+    }
+    h3 { margin: 0 0 4px 0; font-size: 11px; color: var(--text); text-align: left; }
+    
+    label {
+      display: block;
+      font-size: 10px;
+      font-weight: 600;
+      color: #475569;
+      text-align: left;
+      margin-top: 4px;
+      margin-bottom: 2px;
+    }
+    input, select {
+      width: 100%;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 11px;
+      background: #fff;
+      margin-bottom: 4px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .row-add {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .row-add input { margin-bottom: 0; flex: 1; }
+    .row-add button {
+      padding: 4px 6px;
+      background: #e2e8f0;
+      border: none;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 9px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-action {
+      background: var(--primary);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+    .btn-action:active { transform: scale(0.98); }
+
+    .timer-row {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+    .btn-start { background: var(--success); color: white; border: none; flex: 1; padding: 6px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
+    .btn-stop { background: var(--danger); color: white; border: none; flex: 1; padding: 6px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; }
+
+    .status-msg { margin-top: 2px; font-size: 9px; font-weight: 500; color: var(--success); height: 12px; text-align: center; }
+
+    .receipt {
+      background: #fffbeb;
+      border: 1px dashed #fcd34d;
+      border-radius: 6px;
+      padding: 4px 6px;
+      text-align: left;
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 4px;
+    }
+    .receipt-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 9px;
+      padding: 5px 0;
+      border-bottom: 1px solid #fef3c7;
+    }
+    .receipt-item:last-child { border-bottom: none; }
+    .tag { font-size: 8px; background: #e2e8f0; padding: 1px 4px; border-radius: 3px; color: #334155; margin-right: 3px; }
+    .tag-dest { background: #bae6fd; color: #0369a1; }
+    .tag-comp { background: #e9d5ff; color: #6b21a8; }
+    
+    .action-btns { display: flex; gap: 3px; align-items: center; }
+    .btn-check { background: var(--success); color: white; border: none; border-radius: 3px; padding: 3px 5px; font-size: 8px; cursor: pointer; }
+    .item-del-btn { background: var(--danger); color: white; border: none; border-radius: 3px; width: 16px; height: 16px; font-size: 9px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <div class="date-header" id="currentDateStr">Laden...</div>
+      <h3 style="text-align: center; margin-bottom: 4px;">Ritten Overzicht (Eerstvolgende bovenaan)</h3>
+      
+      <div class="receipt" id="receiptList">
+        <div style="color: #94a3b8; text-align: center; font-size: 9px;">Gegevens ophalen...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Nieuwe Rit Inplannen</h3>
+      
+      <label>Afspraak Datum & Tijd (Verplicht):</label>
+      <input type="datetime-local" id="afspraakInput">
+
+      <div class="grid-2">
+        <div>
+          <label>Start Datum & Tijd:</label>
+          <input type="datetime-local" id="startInput">
+        </div>
+        <div>
+          <label>Eind Datum & Tijd:</label>
+          <input type="datetime-local" id="eindInput">
+        </div>
+      </div>
+
+      <!-- Live Start/Stop Knoppen om snel tijd in te vullen -->
+      <div class="timer-row">
+        <button class="btn-start" onclick="setLiveTime('start')">▶ Start Nu</button>
+        <button class="btn-stop" onclick="setLiveTime('eind')">⏹ Stop Nu</button>
+      </div>
+
+      <label>Bestemming:</label>
+      <select id="bestemmingSelect"></select>
+      <div class="row-add">
+        <input type="text" id="newBestemmingInput" placeholder="Nieuwe bestemming...">
+        <button onclick="addBestemming()">+ Voeg</button>
+      </div>
+
+      <label>Bedrijf:</label>
+      <select id="bedrijfSelect"></select>
+      <div class="row-add">
+        <input type="text" id="newBedrijfInput" placeholder="Nieuw bedrijf...">
+        <button onclick="addBedrijf()">+ Voeg</button>
+      </div>
+
+      <label>Herhaling:</label>
+      <select id="herhalingSelect">
+        <option value="geen">Geen herhaling</option>
+        <option value="dag">Elke dag</option>
+        <option value="omdedag">Om de dag</option>
+        <option value="ma-wo-vr">Ma - Wo - Vr</option>
+        <option value="di-do-za">Di - Do - Za</option>
+      </select>
+
+      <label>Herhalen tot einddatum (optioneel bij herhaling):</label>
+      <input type="date" id="eindDatumHerhalingInput">
+
+      <button class="btn-action" onclick="opslaanRit()">Rit Inplannen</button>
+      <div class="status-msg" id="statusMsg"></div>
+    </div>
+  </div>
+
+  <script>
+    const BIN_ID = '6ab4ec9dff5d1605329c8e3';
+    const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
+
+    let bestemmingen = JSON.parse(localStorage.getItem('taxi_bestemmingen')) || ["Ziekenhuis", "Therapie", "Centrum"];
+    let bedrijven = JSON.parse(localStorage.getItem('taxi_bedrijven')) || ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"];
+    let cloudData = { ritten: [] };
+
+    function renderDate() {
+      const options = { weekday: 'short', month: 'short', day: 'numeric' };
+      document.getElementById('currentDateStr').innerText = new Date().toLocaleDateString('nl-NL', options);
+    }
+
+    function initUI() {
+      renderDate();
+
+      let bSelect = document.getElementById('bestemmingSelect');
+      bSelect.innerHTML = "";
+      bestemmingen.forEach(b => {
+        let opt = document.createElement('option');
+        opt.value = b;
+        opt.innerText = b;
+        bSelect.appendChild(opt);
+      });
+
+      let cSelect = document.getElementById('bedrijfSelect');
+      cSelect.innerHTML = "";
+      bedrijven.forEach(c => {
+        let opt = document.createElement('option');
+        opt.value = c;
+        opt.innerText = c;
+        cSelect.appendChild(opt);
+      });
+    }
+
+    function addBestemming() {
+      let val = document.getElementById('newBestemmingInput').value.trim();
+      if(val && !bestemmingen.includes(val)) {
+        bestemmingen.push(val);
+        localStorage.setItem('taxi_bestemmingen', JSON.stringify(bestemmingen));
+        document.getElementById('newBestemmingInput').value = "";
+        initUI();
+        document.getElementById('bestemmingSelect').value = val;
+      }
+    }
+
+    function addBedrijf() {
+      let val = document.getElementById('newBedrijfInput').value.trim();
+      if(val && !bedrijven.includes(val)) {
+        bedrijven.push(val);
+        localStorage.setItem('taxi_bedrijven', JSON.stringify(bedrijven));
+        document.getElementById('newBedrijfInput').value = "";
+        initUI();
+        document.getElementById('bedrijfSelect').value = val;
+      }
+    }
+
+    function setLiveTime(target) {
+      let now = new Date();
+      let tzOffset = now.getTimezoneOffset() * 60000;
+      let localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, 16);
+      if(target === 'start') {
+        document.getElementById('startInput').value = localISOTime;
+      } else {
+        document.getElementById('eindInput').value = localISOTime;
+      }
+    }
+
+    function fetchData() {
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: { 'X-Master-Key': MASTER_KEY }
+      })
+      .then(res => res.json())
+      .then(data => {
+        cloudData = data.record || { ritten: [] };
+        if(!cloudData.ritten) cloudData.ritten = [];
+        updateUI();
+      })
+      .catch(err => {
+        console.error("Fout bij ophalen:", err);
+      });
+    }
+
+    function updateUI() {
+      let receiptContainer = document.getElementById('receiptList');
+      if (cloudData.ritten && cloudData.ritten.length > 0) {
+        receiptContainer.innerHTML = "";
+
+        let sortedRitten = [...cloudData.ritten].sort((a, b) => {
+          if (a.afgehandeld !== b.afgehandeld) {
+            return a.afgehandeld ? 1 : -1;
+          }
+          return new Date(a.afspraak) - new Date(b.afspraak);
+        });
+
+        sortedRitten.forEach((item) => {
+          let origIndex = cloudData.ritten.indexOf(item);
+          let row = document.createElement('div');
+          row.className = "receipt-item";
+          if(item.afgehandeld) row.style.opacity = "0.5";
+
+          let afspraakFormatted = item.afspraak ? item.afspraak.replace('T', ' ') : '';
+          
+          row.innerHTML = `
+            <div>
+              <div><b>${afspraakFormatted}</b></div>
+              <div>
+                <span class="tag tag-dest">${item.bestemming}</span>
+                <span class="tag tag-comp">${item.bedrijf}</span>
+                ${item.start ? `<span style="font-size:8px; color:#64748b;">Start: ${item.start.replace('T',' ')}</span>` : ''}
+              </div>
+            </div>
+            <div class="action-btns">
+              <button class="btn-check" onclick="toggleAfgehandeld(${origIndex})">${item.afgehandeld ? 'Heropen' : 'Klaar ✓'}</button>
+              <button class="item-del-btn" onclick="deleteRit(${origIndex})">✕</button>
+            </div>
+          `;
+          receiptContainer.appendChild(row);
+        });
+      } else {
+        receiptContainer.innerHTML = `<div style="color: #94a3b8; text-align: center; font-size: 9px;">Geen ritten ingepland</div>`;
+      }
+    }
+
+    function opslaanRit() {
+      let afspraak = document.getElementById('afspraakInput').value;
+      if(!afspraak) {
+        alert("Afspraak datum en tijd is een verplicht veld!");
+        return;
+      }
+
+      let start = document.getElementById('startInput').value;
+      let eind = document.getElementById('eindInput').value;
+      let bestemming = document.getElementById('bestemmingSelect').value;
+      let bedrijf = document.getElementById('bedrijfSelect').value;
+      let herhaling = document.getElementById('herhalingSelect').value;
+      let eindHerhaling = document.getElementById('eindDatumHerhalingInput').value;
+
+      cloudData.ritten.push({
+        afspraak, start, eind, bestemming, bedrijf, afgehandeld: false
+      });
+
+      if(herhaling !== 'geen' && eindHerhaling) {
+        let currDate = new Date(afspraak);
+        let endDate = new Date(eindHerhaling);
+
+        while(true) {
+          if(herhaling === 'dag') currDate.setDate(currDate.getDate() + 1);
+          else if(herhaling === 'omdedag') currDate.setDate(currDate.getDate() + 2);
+          else if(herhaling === 'ma-wo-vr') {
+            do { currDate.setDate(currDate.getDate() + 1); } 
+            while([2, 4, 0].includes(currDate.getDay()));
+          }
+          else if(herhaling === 'di-do-za') {
+            do { currDate.setDate(currDate.getDate() + 1); } 
+            while([1, 3, 5, 0].includes(currDate.getDay()));
+          }
+
+          if(currDate > endDate) break;
+
+          let isoStr = currDate.toISOString().slice(0, 16);
+          cloudData.ritten.push({
+            afspraak: isoStr,
+            start: start ? isoStr : '',
+            eind: eind ? isoStr : '',
+            bestemming,
+            bedrijf,
+            afgehandeld: false
+          });
+        }
+      }
+
+      syncCloud("Rit(ten) Opgeslagen! ✅");
+      document.getElementById('afspraakInput').value = "";
+      document.getElementById('startInput').value = "";
+      document.getElementById('eindInput').value = "";
+    }
+
+    function toggleAfgehandeld(index) {
+      cloudData.ritten[index].afgehandeld = !cloudData.ritten[index].afgehandeld;
+      syncCloud("Status bijgewerkt!");
+    }
+
+    function deleteRit(index) {
+      if(confirm("Wil je deze rit verwijderen?")) {
+        cloudData.ritten.splice(index, 1);
+        syncCloud("Verwijderd! 🗑️");
+      }
+    }
+
+    function syncCloud(msg) {
+      document.getElementById('statusMsg').innerText = "Opslaan...";
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': MASTER_KEY },
+        body: JSON.stringify(cloudData)
+      })
+      .then(res => res.json())
+      .then(res => {
+        document.getElementById('statusMsg').innerText = msg;
+        updateUI();
+        setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 1500);
+      })
+      .catch(err => {
+        document.getElementById('statusMsg').innerText = "Fout bij opslaan ❌";
+      });
+    }
+
+    initUI();
+    fetchData();
+  </script>
+</body>
+</html>
