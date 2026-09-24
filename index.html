@@ -360,6 +360,12 @@
         document.getElementById('startInput').value = localString;
       } else {
         document.getElementById('eindInput').value = localString;
+        
+        // AUTOMATISCH VINKJE: Als we op Stop Nu drukken, vullen we ook direct de afspraak of control in
+        // en als we in bewerkmodus zitten, zetten we hem meteen op afgehandeld!
+        if (editingIndex !== null) {
+          appData.ritten[editingIndex].afgehandeld = true;
+        }
       }
     }
 
@@ -395,10 +401,14 @@
       let herhaling = document.getElementById('herhalingSelect').value;
       let eindHerhaling = document.getElementById('eindDatumHerhalingInput').value;
 
+      // Als de eindtijd is ingevuld (bijv. via Stop Nu), zetten we hem automatisch op afgehandeld (true)
+      let isAfgehandeldAuto = eind !== "";
+
       if (editingIndex !== null) {
         appData.ritten[editingIndex] = {
           ...appData.ritten[editingIndex],
-          afspraak, start, eind, bestemming, bedrijf
+          afspraak, start, eind, bestemming, bedrijf,
+          afgehandeld: isAfgehandeldAuto ? true : appData.ritten[editingIndex].afgehandeld
         };
         editingIndex = null;
         document.getElementById('formTitle').innerText = "Nieuwe Rit Inplannen";
@@ -408,7 +418,7 @@
         document.getElementById('herhalingContainer').style.display = 'block';
       } else {
         appData.ritten.push({
-          afspraak, start, eind, bestemming, bedrijf, afgehandeld: false
+          afspraak, start, eind, bestemming, bedrijf, afgehandeld: isAfgehandeldAuto
         });
 
         if(herhaling !== 'geen' && eindHerhaling) {
