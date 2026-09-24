@@ -55,12 +55,16 @@
       font-size: 10px;
       padding: 3px 8px;
       border-radius: 20px;
-      background: rgba(34, 197, 94, 0.15);
-      color: var(--success);
+      background: #334155;
+      color: #94a3b8;
       display: flex;
       align-items: center;
       gap: 4px;
+      cursor: pointer;
     }
+    .sync-status.synced { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+    .sync-status.syncing { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
+    .sync-status.error { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
     
     label { display: block; font-size: 11px; font-weight: 600; color: #94a3b8; text-align: left; margin-top: 8px; margin-bottom: 3px; }
     input, select {
@@ -101,9 +105,6 @@
     .btn-check { background: var(--success); color: white; border: none; border-radius: 4px; padding: 5px 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
     .btn-edit { background: var(--warning); color: #0f172a; border: none; border-radius: 4px; padding: 5px 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
     .item-del-btn { background: var(--danger); color: white; border: none; border-radius: 4px; width: 24px; height: 24px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-  
-    .backup-row { display: flex; gap: 6px; margin-top: 10px; }
-    .btn-backup { background: #334155; color: #f8fafc; border: none; flex: 1; padding: 8px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -115,8 +116,8 @@
           <div style="font-size: 15px; font-weight: 900; color: var(--text);">DriveSync</div>
           <span class="date-header" id="currentDateStr">Laden...</span>
         </div>
-        <div class="sync-status">
-          <span>●</span> <span>Actief</span>
+        <div class="sync-status synced" id="syncStatusIndicator" onclick="laadVanBin(true)">
+          <span id="syncDot">●</span> <span id="syncText">Verbonden</span>
         </div>
       </div>
       
@@ -127,11 +128,6 @@
       
       <div class="receipt" id="receiptList">
         <div style="color: #64748b; text-align: center; font-size: 11px; padding: 15px;">Geen ritten ingepland</div>
-      </div>
-
-      <div class="backup-row">
-        <button class="btn-backup" onclick="exportData()">📥 Exporteer Data</button>
-        <button class="btn-backup" onclick="importDataPrompt()">📤 Importeer Data</button>
       </div>
     </div>
 
@@ -191,17 +187,14 @@
   </div>
 
   <script>
-    // Laad veilig uit LocalStorage of gebruik standaardwaarden
-    let appData = { ritten: [], bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"], bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"] };
-    
-    try {
-      let saved = localStorage.getItem('drivesync_v2_data');
-      if (saved) {
-        appData = JSON.parse(saved);
-      }
-    } catch(e) {
-      console.error("Fout bij laden lokale opslag", e);
-    }
+    const BIN_ID = '6ab4ec9dff5d1605329c8e3';
+    const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
+
+    let appData = { 
+      ritten: [], 
+      bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"], 
+      bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"] 
+    };
 
     let editingIndex = null;
 
@@ -210,12 +203,11 @@
       document.getElementById('currentDateStr').innerText = new Date().toLocaleDateString('nl-NL', options);
     }
 
-    function saveLocal() {
-      try {
-        localStorage.setItem('drivesync_v2_data', JSON.stringify(appData));
-      } catch(e) {
-        console.error("Opslaan mislukt", e);
-      }
+    function setStatus(type, text) {
+      let indicator = document.getElementById('syncStatusIndicator');
+      let textEl = document.getElementById('syncText');
+      textEl.innerText = text;
+      indicator.className = "sync-status " + type;
     }
 
     function initUI() {
@@ -246,8 +238,6 @@
 
     function updateUI() {
       initUI();
-      saveLocal();
-      
       let receiptContainer = document.getElementById('receiptList');
       let badge = document.getElementById('aantalRittenBadge');
       
@@ -290,12 +280,62 @@
       }
     }
 
+    // Direct opslaan naar JSONBin
+    function slaOpInBin() {
+      setStatus("syncing", "Opslaan...");
+
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': MASTER_KEY
+        },
+        body: JSON.stringify(appData)
+      })
+      .then(res => res.json())
+      .then(data => {
+        setStatus("synced", "Opgeslagen");
+        setTimeout(() => setStatus("synced", "Verbonden"), 2000);
+      })
+      .catch(err => {
+        console.error("Fout bij opslaan in bin:", err);
+        setStatus("error", "Fout bij opslaan");
+      });
+    }
+
+    // Direct inladen vanuit JSONBin
+    function laadVanBin(isManual = false) {
+      if(isManual) setStatus("syncing", "Laden...");
+
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+        headers: {
+          'X-Master-Key': MASTER_KEY
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.record) {
+          appData = data.record;
+          updateUI();
+          if(isManual) {
+            setStatus("synced", "Bijgewerkt");
+            setTimeout(() => setStatus("synced", "Verbonden"), 2000);
+          }
+        }
+      })
+      .catch(err => {
+        console.error("Fout bij laden van bin:", err);
+        if(isManual) setStatus("error", "Laadfout");
+      });
+    }
+
     function addBestemming() {
       let val = document.getElementById('newBestemmingInput').value.trim();
       if(val && !appData.bestemmingen.includes(val)) {
         appData.bestemmingen.push(val);
         document.getElementById('newBestemmingInput').value = "";
         updateUI();
+        slaOpInBin();
       }
     }
 
@@ -305,6 +345,7 @@
         appData.bedrijven.push(val);
         document.getElementById('newBedrijfInput').value = "";
         updateUI();
+        slaOpInBin();
       }
     }
 
@@ -413,51 +454,27 @@
       document.getElementById('afspraakInput').value = "";
       document.getElementById('startInput').value = "";
       document.getElementById('eindInput').value = "";
+      
       updateUI();
+      slaOpInBin(); // Slaat direct op in de bin!
     }
 
     function toggleAfgehandeld(index) {
       appData.ritten[index].afgehandeld = !appData.ritten[index].afgehandeld;
       updateUI();
+      slaOpInBin();
     }
 
     function deleteRit(index) {
       if(confirm("Weet je zeker dat je deze rit wilt verwijderen?")) {
         appData.ritten.splice(index, 1);
         updateUI();
+        slaOpInBin();
       }
     }
 
-    function exportData() {
-      let dataStr = JSON.stringify(appData, null, 2);
-      let blob = new Blob([dataStr], {type: "application/json"});
-      let url = URL.createObjectURL(blob);
-      let a = document.createElement('a');
-      a.href = url;
-      a.download = 'drivesync-backup.json';
-      a.click();
-    }
-
-    function importDataPrompt() {
-      let jsonString = prompt("Plak hier je gekopieerde backup code:");
-      if(jsonString) {
-        try {
-          let parsed = JSON.parse(jsonString);
-          if(parsed && Array.isArray(parsed.ritten)) {
-            appData = parsed;
-            updateUI();
-            alert("Data succesvol geïmporteerd!");
-          } else {
-            alert("Ongeldige opmaak.");
-          }
-        } catch(e) {
-          alert("Kon de code niet lezen.");
-        }
-      }
-    }
-
-    // Direct starten bij openen
-    updateUI();
+    // Direct laden bij opstarten vanuit de bin
+    laadVanBin(false);
   </script>
 </body>
 </html>
