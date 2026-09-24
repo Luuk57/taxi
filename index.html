@@ -281,7 +281,7 @@
         <h1>DriveSync</h1>
         <p id="dateDisplay">Laden...</p>
       </div>
-      <div class="sync-status" onclick="syncData(true)" title="Klik om te verversen">
+      <div class="sync-status" onclick="loadData(true)" title="Klik om handmatig te verversen">
         <div class="sync-dot" id="syncDot"></div>
         <span id="syncText">Verbinden</span>
       </div>
@@ -421,7 +421,7 @@
         document.getElementById(inputId).value = "";
         initDropdowns();
         document.getElementById(type === 'bestemming' ? 'bestemmingSelect' : 'bedrijfSelect').value = val;
-        syncData(false, type === 'bestemming' ? 'Bestemming toegevoegd' : 'Bedrijf toegevoegd');
+        syncData(type === 'bestemming' ? 'Bestemming toegevoegd' : 'Bedrijf toegevoegd');
       }
     }
 
@@ -481,7 +481,7 @@
       if (editingIndex !== null) {
         appData.ritten[editingIndex] = { ...appData.ritten[editingIndex], afspraak, start, eind, bestemming, bedrijf };
         resetForm();
-        syncData(false, "Rit bijgewerkt! ✅");
+        syncData("Rit bijgewerkt! ✅");
       } else {
         appData.ritten.push({ afspraak, start, eind, bestemming, bedrijf, afgehandeld: false });
 
@@ -517,7 +517,7 @@
         }
 
         resetForm();
-        syncData(false, "Rit(ten) ingepland! ✅");
+        syncData("Rit(ten) ingepland! ✅");
       }
     }
 
@@ -551,13 +551,13 @@
 
     function toggleDone(idx) {
       appData.ritten[idx].afgehandeld = !appData.ritten[idx].afgehandeld;
-      syncData(false, "Status gewijzigd");
+      syncData("Status gewijzigd");
     }
 
     function deleteTrip(idx) {
       if (confirm("Weet je zeker dat je deze rit wilt verwijderen?")) {
         appData.ritten.splice(idx, 1);
-        syncData(false, "Rit verwijderd 🗑️");
+        syncData("Rit verwijderd 🗑️");
       }
     }
 
@@ -575,7 +575,7 @@
       setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    function syncData(manual = false, successMsg = "Opgeslagen! ✅") {
+    function syncData(successMsg = "Opgeslagen! ✅") {
       if (isSaving) return;
       isSaving = true;
       setStatus('', 'Opslaan...');
@@ -589,12 +589,15 @@
         body: JSON.stringify(appData)
       })
       .then(res => res.json())
-      .then(() => {
+      .then(data => {
         isSaving = false;
         setStatus('online', 'Online');
+        if (data && data.record) {
+          appData = data.record;
+        }
         initDropdowns();
         renderTrips();
-        if (manual || successMsg) showToast(successMsg);
+        if (successMsg) showToast(successMsg);
       })
       .catch(err => {
         console.error(err);
@@ -604,8 +607,9 @@
       });
     }
 
-    function loadData() {
-      setStatus('', 'Laden...');
+    function loadData(manual = false) {
+      if (manual) setStatus('', 'Vernieuwen...');
+      
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
         headers: {
           'X-Master-Key': MASTER_KEY,
@@ -614,11 +618,14 @@
       })
       .then(res => res.json())
       .then(data => {
-        if (data && data.record && Array.isArray(data.record.ritten)) {
-          appData = data.record;
+        // JSONBin v3 slaat data op onder .record
+        let payload = data.record || data;
+        if (payload && Array.isArray(payload.ritten)) {
+          appData = payload;
           setStatus('online', 'Online');
           initDropdowns();
           renderTrips();
+          if (manual) showToast("Gegevens bijgewerkt! 🔄");
         } else {
           setStatus('online', 'Gereed');
         }
@@ -626,13 +633,15 @@
       .catch(err => {
         console.error(err);
         setStatus('error', 'Offline');
+        if (manual) showToast("Kon niet verbinden met server");
       });
     }
 
     updateHeaderDate();
     loadData();
-    setInterval(loadData, 5000);
+    // Automatisch elke 4 seconden controleren of er op een ander apparaat iets is gewijzigd
+    setInterval(loadData, 4000);
   </script>
 </body>
 </html>
-```5
+```
