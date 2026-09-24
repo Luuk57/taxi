@@ -226,9 +226,12 @@
     const BIN_ID = '6ab4ec9dff5d1605329c8e3';
     const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
 
-    let bestemmingen = JSON.parse(localStorage.getItem('taxi_bestemmingen')) || ["Ziekenhuis", "Therapie", "Centrum"];
-    let bedrijven = JSON.parse(localStorage.getItem('taxi_bedrijven')) || ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"];
-    let cloudData = { ritten: [] };
+    // Centrale data gestructureerd voor cloud synchronisatie
+    let cloudData = { 
+      ritten: [], 
+      bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"], 
+      bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"] 
+    };
 
     function renderDate() {
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
@@ -241,45 +244,53 @@
       let bSelect = document.getElementById('bestemmingSelect');
       let currentB = bSelect.value;
       bSelect.innerHTML = "";
-      bestemmingen.forEach(b => {
+      if(!cloudData.bestemmingen) cloudData.bestemmingen = ["Ziekenhuis", "Therapie", "Centrum"];
+      
+      cloudData.bestemmingen.forEach(b => {
         let opt = document.createElement('option');
         opt.value = b;
         opt.innerText = b;
         bSelect.appendChild(opt);
       });
-      if(currentB) bSelect.value = currentB;
+      if(currentB && cloudData.bestemmingen.includes(currentB)) {
+        bSelect.value = currentB;
+      }
 
       let cSelect = document.getElementById('bedrijfSelect');
       let currentC = cSelect.value;
       cSelect.innerHTML = "";
-      bedrijven.forEach(c => {
+      if(!cloudData.bedrijven) cloudData.bedrijven = ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"];
+
+      cloudData.bedrijven.forEach(c => {
         let opt = document.createElement('option');
         opt.value = c;
         opt.innerText = c;
         cSelect.appendChild(opt);
       });
-      if(currentC) cSelect.value = currentC;
+      if(currentC && cloudData.bedrijven.includes(currentC)) {
+        cSelect.value = currentC;
+      }
     }
 
     function addBestemming() {
       let val = document.getElementById('newBestemmingInput').value.trim();
-      if(val && !bestemmingen.includes(val)) {
-        bestemmingen.push(val);
-        localStorage.setItem('taxi_bestemmingen', JSON.stringify(bestemmingen));
+      if(val && !cloudData.bestemmingen.includes(val)) {
+        cloudData.bestemmingen.push(val);
         document.getElementById('newBestemmingInput').value = "";
         initUI();
         document.getElementById('bestemmingSelect').value = val;
+        syncCloud("Bestemming toegevoegd & gesynchroniseerd! ✅");
       }
     }
 
     function addBedrijf() {
       let val = document.getElementById('newBedrijfInput').value.trim();
-      if(val && !bedrijven.includes(val)) {
-        bedrijven.push(val);
-        localStorage.setItem('taxi_bedrijven', JSON.stringify(bedrijven));
+      if(val && !cloudData.bedrijven.includes(val)) {
+        cloudData.bedrijven.push(val);
         document.getElementById('newBedrijfInput').value = "";
         initUI();
         document.getElementById('bedrijfSelect').value = val;
+        syncCloud("Bedrijf toegevoegd & gesynchroniseerd! ✅");
       }
     }
 
@@ -302,7 +313,6 @@
     function fetchData(showFeedback = false) {
       if(showFeedback) document.getElementById('statusMsg').innerText = "Verversen...";
       
-      // We voegen een uniek getal toe achter de URL zodat de browser niet uit het geheugen laadt
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
         headers: { 
           'X-Master-Key': MASTER_KEY,
@@ -311,11 +321,12 @@
       })
       .then(res => res.json())
       .then(data => {
-        let remoteData = data.record || { ritten: [] };
-        if(!remoteData.ritten) remoteData.ritten = [];
-        
-        cloudData = remoteData;
-        updateUI();
+        let remoteData = data.record;
+        if(remoteData && remoteData.ritten) {
+          cloudData = remoteData;
+          initUI();
+          updateUI();
+        }
         if(showFeedback) {
           document.getElementById('statusMsg').innerText = "Bijgewerkt! ✅";
           setTimeout(() => { document.getElementById('statusMsg').innerText = ""; }, 1500);
@@ -478,10 +489,10 @@
       });
     }
 
-    initUI();
+    // Eerste data ophalen direct bij opstarten
     fetchData();
 
-    // Automatische check elke 4 seconden
+    // Automatische check elke 4 seconden om wijzigingen van het andere apparaat op te halen
     setInterval(() => fetchData(false), 4000);
   </script>
 </body>
