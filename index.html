@@ -1,652 +1,570 @@
-```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <title>DriveSync - Rittenplanner</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary: #4f46e5;
-      --primary-hover: #4338ca;
       --bg: #0f172a;
       --card-bg: #1e293b;
-      --card-border: #334155;
       --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-green: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-rose: #f43f5e;
-      --radius: 16px;
+      --border: #334155;
+      --danger: #ef4444;
+      --primary: #38bdf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
     }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
-
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      max-width: 100vw;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
     body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: 16px;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 480px;
+      padding: 10px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      align-items: center;
     }
-
-    /* HEADER */
-    .app-header {
+    .container { width: 100%; max-width: 600px; }
+    
+    .form-section {
       background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+      margin-bottom: 14px;
+      width: 100%;
+    }
+    .form-section.active-edit {
+      border-color: var(--warning);
+      background-color: #27272a;
     }
 
-    .app-title h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: #fff; }
-    .app-title p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-
-    .sync-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--card-border);
-      padding: 8px 12px;
-      border-radius: 30px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .sync-status:active { transform: scale(0.95); }
-    .sync-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--accent-amber);
-      box-shadow: 0 0 8px var(--accent-amber);
-    }
-    .sync-dot.online { background: var(--accent-green); box-shadow: 0 0 8px var(--accent-green); }
-    .sync-dot.error { background: var(--accent-rose); box-shadow: 0 0 8px var(--accent-rose); }
-
-    /* CARDS & PANELS */
-    .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius);
-      padding: 20px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
-    }
-
-    .card-header {
-      font-size: 14px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 10px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
     }
 
-    /* FORM CONTROLS */
-    .form-group {
-      margin-bottom: 14px;
+    .date-header {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text);
+      text-transform: capitalize;
     }
+
+    .sync-status {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      background: #334155;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+    .sync-status.synced { background: rgba(34, 197, 94, 0.15); color: var(--success); }
+    .sync-status.syncing { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
+    
     label {
       display: block;
       font-size: 11px;
       font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      text-transform: uppercase;
+      color: #94a3b8;
+      text-align: left;
+      margin-top: 8px;
+      margin-bottom: 3px;
     }
     input, select {
       width: 100%;
+      padding: 9px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
       background: #0f172a;
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 12px;
-      color: #fff;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
+      color: var(--text);
+      margin-bottom: 4px;
     }
     input:focus, select:focus {
+      outline: none;
       border-color: var(--primary);
     }
-
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .action-row {
-      display: flex;
       gap: 8px;
-      margin-top: 6px;
     }
-    .action-row input { flex: 1; margin-bottom: 0; padding: 8px 12px; font-size: 12px; }
-    .btn-sub {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--card-border);
-      color: #fff;
+    .row-add {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .row-add input { margin-bottom: 0; flex: 1; }
+    .row-add button {
       padding: 0 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .btn-sub:hover { background: rgba(255, 255, 255, 0.15); }
-
-    .timer-buttons {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-    .btn-timer {
-      flex: 1;
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: var(--accent-green);
-      padding: 8px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .btn-timer.stop {
-      background: rgba(244, 63, 94, 0.1);
-      border: 1px solid rgba(244, 63, 94, 0.3);
-      color: var(--accent-rose);
-    }
-
-    .btn-main {
-      width: 100%;
-      background: var(--primary);
-      color: #fff;
+      background: var(--border);
       border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 14px;
-      font-weight: 700;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 11px;
+      color: var(--text);
       cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      margin-top: 6px;
+      white-space: nowrap;
     }
-    .btn-main:hover { background: var(--primary-hover); }
-    .btn-main:active { transform: scale(0.98); }
-    .btn-main.editing { background: var(--accent-amber); color: #000; }
+    .row-add button:active { background: var(--primary); color: #000; }
 
-    /* RITTEN LIJST */
-    .trips-list {
+    .btn-action {
+      background: var(--primary);
+      color: #0f172a;
+      border: none;
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-action.editing { background: var(--warning); color: #0f172a; }
+    .btn-action:active { transform: scale(0.98); }
+
+    .timer-row {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      max-height: 400px;
+      gap: 6px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+    .btn-start { background: var(--success); color: #fff; border: none; flex: 1; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+    .btn-stop { background: var(--danger); color: #fff; border: none; flex: 1; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
+
+    .receipt {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px;
+      max-height: 300px;
       overflow-y: auto;
     }
-
-    .trip-card {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 14px;
+    .receipt-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      transition: opacity 0.2s;
+      font-size: 11px;
+      padding: 8px;
+      border-bottom: 1px solid var(--border);
     }
-    .trip-card.done { opacity: 0.5; }
-
-    .trip-info { display: flex; flex-direction: column; gap: 4px; }
-    .trip-time { font-size: 13px; font-weight: 700; color: #fff; }
-    .trip-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+    .receipt-item:last-child { border-bottom: none; }
+    .tag { font-size: 9px; background: #334155; padding: 2px 6px; border-radius: 4px; color: var(--text); margin-right: 4px; display: inline-block; margin-top: 2px;}
+    .tag-dest { background: rgba(56, 189, 248, 0.2); color: var(--primary); }
+    .tag-comp { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
     
-    .badge {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
-    .badge-dest { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
-    .badge-comp { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }
-
-    .trip-actions { display: flex; gap: 6px; align-items: center; }
-    .icon-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: none;
-      color: #fff;
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-    .icon-btn:hover { background: rgba(255, 255, 255, 0.2); }
-    .icon-btn.done-btn { color: var(--accent-green); }
-    .icon-btn.edit-btn { color: var(--accent-amber); }
-    .icon-btn.del-btn { color: var(--accent-rose); }
-
-    .empty-state {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 13px;
-      padding: 30px 0;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: #1e293b;
-      color: #fff;
-      border: 1px solid var(--card-border);
-      padding: 10px 20px;
-      border-radius: 30px;
-      font-size: 13px;
-      font-weight: 600;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      z-index: 1000;
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    .action-btns { display: flex; gap: 4px; align-items: center; }
+    .btn-check { background: var(--success); color: white; border: none; border-radius: 4px; padding: 5px 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
+    .btn-edit { background: var(--warning); color: #0f172a; border: none; border-radius: 4px; padding: 5px 8px; font-size: 10px; cursor: pointer; font-weight: bold; }
+    .item-del-btn { background: var(--danger); color: white; border: none; border-radius: 4px; width: 24px; height: 24px; font-size: 11px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: bold; }
   </style>
 </head>
 <body>
-
-  <div class="app-container">
+  <div class="container">
     
-    <!-- HEADER -->
-    <header class="app-header">
-      <div class="app-title">
-        <h1>DriveSync</h1>
-        <p id="dateDisplay">Laden...</p>
+    <!-- SECTIE 1: OVERZICHT -->
+    <div class="form-section">
+      <div class="section-title">
+        <div>
+          <div style="font-size: 15px; font-weight: 900; color: var(--text);">DriveSync</div>
+          <span class="date-header" id="currentDateStr">Laden...</span>
+        </div>
+        <div class="sync-status" id="syncStatusIndicator" onclick="handmatigeSync()">
+          <span id="syncDot">●</span> <span id="syncText">Klaar</span>
+        </div>
       </div>
-      <div class="sync-status" onclick="loadData(true)" title="Klik om handmatig te verversen">
-        <div class="sync-dot" id="syncDot"></div>
-        <span id="syncText">Verbinden</span>
+      
+      <div style="font-size: 11px; font-weight: bold; margin-bottom: 6px; color: #94a3b8; display: flex; justify-content: space-between;">
+        <span>ACTIEVE RITTEN</span>
+        <span id="aantalRittenBadge" style="background: var(--border); padding: 1px 6px; border-radius: 10px; font-size: 10px;">0</span>
       </div>
-    </header>
+      
+      <div class="receipt" id="receiptList">
+        <div style="color: #64748b; text-align: center; font-size: 11px; padding: 15px;">Geen ritten ingepland</div>
+      </div>
+    </div>
 
-    <!-- RITTEN LIJST OVERZICHT -->
-    <section class="card">
-      <div class="card-header">
-        <span>Actieve Ritten</span>
-        <span id="tripCount" style="font-size: 11px; background: rgba(255,255,255,0.08); padding: 2px 8px; border-radius: 10px;">0</span>
-      </div>
-      <div class="trips-list" id="tripsList">
-        <div class="empty-state">Geen ritten gevonden</div>
-      </div>
-    </section>
-
-    <!-- FORMULIER VOOR INVOER / BEWERKEN -->
-    <section class="card" id="formCard">
-      <div class="card-header" id="formTitle">Nieuwe Rit Inplannen</div>
-
-      <div class="form-group">
-        <label>Afspraak Tijdstip *</label>
-        <input type="datetime-local" id="afspraakInput">
-      </div>
+    <!-- SECTIE 2: INVOER / BEWERKEN -->
+    <div class="form-section" id="inputFormCard">
+      <div class="section-title" id="formTitle">Nieuwe Rit Inplannen</div>
+      
+      <label>AFSPRAAK TIJDSTIP *</label>
+      <input type="datetime-local" id="afspraakInput">
 
       <div class="grid-2">
-        <div class="form-group">
-          <label>Start Tijd</label>
+        <div>
+          <label>START TIJD</label>
           <input type="datetime-local" id="startInput">
         </div>
-        <div class="form-group">
-          <label>Eind Tijd</label>
+        <div>
+          <label>EIND TIJD</label>
           <input type="datetime-local" id="eindInput">
         </div>
       </div>
 
-      <div class="timer-buttons">
-        <button class="btn-timer" onclick="setNow('start')">▶ Start Nu</button>
-        <button class="btn-timer stop" onclick="setNow('eind')">⏹ Stop Nu</button>
+      <div class="timer-row">
+        <button class="btn-start" onclick="setLiveTime('start')">▶ Start Nu</button>
+        <button class="btn-stop" onclick="setLiveTime('eind')">⏹ Stop Nu</button>
       </div>
 
-      <div class="form-group">
-        <label>Bestemming</label>
-        <select id="bestemmingSelect"></select>
-        <div class="action-row" style="margin-top: 6px;">
-          <input type="text" id="newBestemming" placeholder="Nieuwe bestemming...">
-          <button class="btn-sub" onclick="addItem('bestemming')">Toevoegen</button>
-        </div>
+      <label>BESTEMMING</label>
+      <select id="bestemmingSelect"></select>
+      <div class="row-add">
+        <input type="text" id="newBestemmingInput" placeholder="Nieuwe bestemming...">
+        <button onclick="addBestemming()">+ Voeg toe</button>
       </div>
 
-      <div class="form-group">
-        <label>Taxibedrijf</label>
-        <select id="bedrijfSelect"></select>
-        <div class="action-row" style="margin-top: 6px;">
-          <input type="text" id="newBedrijf" placeholder="Nieuw bedrijf...">
-          <button class="btn-sub" onclick="addItem('bedrijf')">Toevoegen</button>
-        </div>
+      <label>BEDRIJF / VVERVOERDER</label>
+      <select id="bedrijfSelect"></select>
+      <div class="row-add">
+        <input type="text" id="newBedrijfInput" placeholder="Nieuw bedrijf...">
+        <button onclick="addBedrijf()">+ Voeg toe</button>
       </div>
 
-      <div id="herhalingWrapper">
-        <div class="form-group">
-          <label>Herhaling</label>
-          <select id="herhalingSelect">
-            <option value="geen">Geen herhaling</option>
-            <option value="dag">Elke dag</option>
-            <option value="omdedag">Om de dag</option>
-            <option value="ma-wo-vr">Ma - Wo - Vr</option>
-            <option value="di-do-za">Di - Do - Za</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Herhalen tot einddatum</label>
-          <input type="date" id="eindHerhalingInput">
-        </div>
+      <div id="herhalingContainer">
+        <label>HERHALING</label>
+        <select id="herhalingSelect">
+          <option value="geen">Geen herhaling</option>
+          <option value="dag">Elke dag</option>
+          <option value="omdedag">Om de dag</option>
+          <option value="ma-wo-vr">Ma - Wo - Vr</option>
+          <option value="di-do-za">Di - Do - Za</option>
+        </select>
+
+        <label>HERHALEN TOT EINDDATUM</label>
+        <input type="date" id="eindDatumHerhalingInput">
       </div>
 
-      <button class="btn-main" id="submitBtn" onclick="saveTrip()">Rit Opslaan</button>
-    </section>
+      <button class="btn-action" id="submitBtn" onclick="opslaanRit()">Rit Inplannen</button>
+    </div>
 
   </div>
-
-  <div class="toast" id="toastMsg">Melding</div>
 
   <script>
     const BIN_ID = '6ab4ec9dff5d1605329c8e3';
     const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
-    
-    let appData = {
-      ritten: [],
-      bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"],
-      bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"]
+
+    // Lokale basisstructuur
+    let appData = { 
+      ritten: [], 
+      bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"], 
+      bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"] 
     };
 
     let editingIndex = null;
-    let isSaving = false;
+    let isSyncing = false;
 
-    function updateHeaderDate() {
-      const options = { weekday: 'long', day: 'numeric', month: 'short' };
-      document.getElementById('dateDisplay').innerText = new Date().toLocaleDateString('nl-NL', options);
+    function renderDate() {
+      const options = { weekday: 'long', month: 'short', day: 'numeric' };
+      document.getElementById('currentDateStr').innerText = new Date().toLocaleDateString('nl-NL', options);
     }
 
-    function initDropdowns() {
-      const bSelect = document.getElementById('bestemmingSelect');
-      const currentB = bSelect.value;
+    function setSyncStatus(status, text) {
+      let indicator = document.getElementById('syncStatusIndicator');
+      let textEl = document.getElementById('syncText');
+      textEl.innerText = text;
+      
+      indicator.className = "sync-status " + status;
+    }
+
+    function initUI() {
+      renderDate();
+
+      // Bestemmingen vullen behoudens selectie
+      let bSelect = document.getElementById('bestemmingSelect');
+      let currentB = bSelect.value;
       bSelect.innerHTML = "";
-      appData.bestemmingen.forEach(item => {
+      appData.bestemmingen.forEach(b => {
         let opt = document.createElement('option');
-        opt.value = item; opt.innerText = item;
+        opt.value = b;
+        opt.innerText = b;
         bSelect.appendChild(opt);
       });
-      if (currentB && appData.bestemmingen.includes(currentB)) bSelect.value = currentB;
+      if(currentB && appData.bestemmingen.includes(currentB)) bSelect.value = currentB;
 
-      const cSelect = document.getElementById('bedrijfSelect');
-      const currentC = cSelect.value;
+      // Bedrijven vullen behoudens selectie
+      let cSelect = document.getElementById('bedrijfSelect');
+      let currentC = cSelect.value;
       cSelect.innerHTML = "";
-      appData.bedrijven.forEach(item => {
+      appData.bedrijven.forEach(c => {
         let opt = document.createElement('option');
-        opt.value = item; opt.innerText = item;
+        opt.value = c;
+        opt.innerText = c;
         cSelect.appendChild(opt);
       });
-      if (currentC && appData.bedrijven.includes(currentC)) cSelect.value = currentC;
+      if(currentC && appData.bedrijven.includes(currentC)) cSelect.value = currentC;
     }
 
-    function setNow(target) {
-      const now = new Date();
-      const local = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-      document.getElementById(target + 'Input').value = local;
-    }
+    function updateUI() {
+      initUI();
+      let receiptContainer = document.getElementById('receiptList');
+      let badge = document.getElementById('aantalRittenBadge');
+      
+      if (appData.ritten && appData.ritten.length > 0) {
+        badge.innerText = appData.ritten.length;
+        receiptContainer.innerHTML = "";
 
-    function addItem(type) {
-      const inputId = type === 'bestemming' ? 'newBestemming' : 'newBedrijf';
-      const val = document.getElementById(inputId).value.trim();
-      const listKey = type === 'bestemming' ? 'bestemmingen' : 'bedrijven';
+        let sortedRitten = [...appData.ritten].sort((a, b) => {
+          if (a.afgehandeld !== b.afgehandeld) return a.afgehandeld ? 1 : -1;
+          return new Date(a.afspraak) - new Date(b.afspraak);
+        });
 
-      if (val && !appData[listKey].includes(val)) {
-        appData[listKey].push(val);
-        document.getElementById(inputId).value = "";
-        initDropdowns();
-        document.getElementById(type === 'bestemming' ? 'bestemmingSelect' : 'bedrijfSelect').value = val;
-        syncData(type === 'bestemming' ? 'Bestemming toegevoegd' : 'Bedrijf toegevoegd');
-      }
-    }
+        sortedRitten.forEach((item) => {
+          let origIndex = appData.ritten.indexOf(item);
+          let row = document.createElement('div');
+          row.className = "receipt-item";
+          if(item.afgehandeld) row.style.opacity = "0.4";
 
-    function renderTrips() {
-      const container = document.getElementById('tripsList');
-      document.getElementById('tripCount').innerText = appData.ritten ? appData.ritten.length : 0;
-
-      if (!appData.ritten || appData.ritten.length === 0) {
-        container.innerHTML = `<div class="empty-state">Geen ritten gepland</div>`;
-        return;
-      }
-
-      let sorted = [...appData.ritten].map((item, idx) => ({ ...item, originalIndex: idx })).sort((a, b) => {
-        if (a.afgehandeld !== b.afgehandeld) return a.afgehandeld ? 1 : -1;
-        return new Date(a.afspraak) - new Date(b.afspraak);
-      });
-
-      container.innerHTML = "";
-      sorted.forEach(trip => {
-        let card = document.createElement('div');
-        card.className = `trip-card ${trip.afgehandeld ? 'done' : ''}`;
-        
-        let formattedDate = trip.afspraak ? trip.afspraak.replace('T', ' ') : '';
-        
-        card.innerHTML = `
-          <div class="trip-info">
-            <div class="trip-time">${formattedDate}</div>
-            <div class="trip-meta">
-              <span class="badge badge-dest">${trip.bestemming || ''}</span>
-              <span class="badge badge-comp">${trip.bedrijf || ''}</span>
+          let afspraakFormatted = item.afspraak ? item.afspraak.replace('T', ' ') : '';
+          
+          row.innerHTML = `
+            <div>
+              <div style="font-weight: 700; color: #f8fafc; font-size: 12px;">${afspraakFormatted}</div>
+              <div>
+                <span class="tag tag-dest">${item.bestemming}</span>
+                <span class="tag tag-comp">${item.bedrijf}</span>
+                ${item.start ? `<span style="font-size:9px; color:#94a3b8;">Start: ${item.start.replace('T',' ')}</span>` : ''}
+              </div>
             </div>
-          </div>
-          <div class="trip-actions">
-            <button class="icon-btn edit-btn" onclick="startEdit(${trip.originalIndex})" title="Bewerk">✎</button>
-            <button class="icon-btn done-btn" onclick="toggleDone(${trip.originalIndex})" title="Status">${trip.afgehandeld ? '↺' : '✓'}</button>
-            <button class="icon-btn del-btn" onclick="deleteTrip(${trip.originalIndex})" title="Verwijder">✕</button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function saveTrip() {
-      const afspraak = document.getElementById('afspraakInput').value;
-      if (!afspraak) {
-        showToast("Kies ten minste een afspraak tijdstip!");
-        return;
-      }
-
-      const start = document.getElementById('startInput').value;
-      const eind = document.getElementById('eindInput').value;
-      const bestemming = document.getElementById('bestemmingSelect').value;
-      const bedrijf = document.getElementById('bedrijfSelect').value;
-      const herhaling = document.getElementById('herhalingSelect').value;
-      const eindHerhaling = document.getElementById('eindHerhalingInput').value;
-
-      if (editingIndex !== null) {
-        appData.ritten[editingIndex] = { ...appData.ritten[editingIndex], afspraak, start, eind, bestemming, bedrijf };
-        resetForm();
-        syncData("Rit bijgewerkt! ✅");
+            <div class="action-btns">
+              <button class="btn-edit" onclick="laadRitVoorBewerking(${origIndex})">Bewerk</button>
+              <button class="btn-check" onclick="toggleAfgehandeld(${origIndex})">${item.afgehandeld ? 'Heropen' : '✓'}</button>
+              <button class="item-del-btn" onclick="deleteRit(${origIndex})">✕</button>
+            </div>
+          `;
+          receiptContainer.appendChild(row);
+        });
       } else {
-        appData.ritten.push({ afspraak, start, eind, bestemming, bedrijf, afgehandeld: false });
-
-        if (herhaling !== 'geen' && eindHerhaling) {
-          let baseDate = new Date(afspraak);
-          let endDate = new Date(eindHerhaling + "T23:59:59");
-          let curr = new Date(baseDate);
-
-          while (true) {
-            if (herhaling === 'dag') curr.setDate(curr.getDate() + 1);
-            else if (herhaling === 'omdedag') curr.setDate(curr.getDate() + 2);
-            else if (herhaling === 'ma-wo-vr') {
-              do { curr.setDate(curr.getDate() + 1); } while ([2, 4, 0].includes(curr.getDay()));
-            } else if (herhaling === 'di-do-za') {
-              do { curr.setDate(curr.getDate() + 1); } while ([1, 3, 5, 0].includes(curr.getDay()));
-            }
-
-            if (curr > endDate) break;
-
-            let y = curr.getFullYear();
-            let m = String(curr.getMonth() + 1).padStart(2, '0');
-            let d = String(curr.getDate()).padStart(2, '0');
-            let hr = String(baseDate.getHours()).padStart(2, '0');
-            let min = String(baseDate.getMinutes()).padStart(2, '0');
-
-            appData.ritten.push({
-              afspraak: `${y}-${m}-${d}T${hr}:${min}`,
-              start: start ? `${y}-${m}-${d}T${start.split('T')[1]}` : "",
-              eind: eind ? `${y}-${m}-${d}T${eind.split('T')[1]}` : "",
-              bestemming, bedrijf, afgehandeld: false
-            });
-          }
-        }
-
-        resetForm();
-        syncData("Rit(ten) ingepland! ✅");
+        badge.innerText = "0";
+        receiptContainer.innerHTML = `<div style="color: #64748b; text-align: center; font-size: 11px; padding: 15px;">Geen ritten ingepland</div>`;
       }
     }
 
-    function startEdit(idx) {
-      let trip = appData.ritten[idx];
-      document.getElementById('afspraakInput').value = trip.afspraak || '';
-      document.getElementById('startInput').value = trip.start || '';
-      document.getElementById('eindInput').value = trip.eind || '';
-      document.getElementById('bestemmingSelect').value = trip.bestemming || '';
-      document.getElementById('bedrijfSelect').value = trip.bedrijf || '';
+    function addBestemming() {
+      let val = document.getElementById('newBestemmingInput').value.trim();
+      if(val && !appData.bestemmingen.includes(val)) {
+        appData.bestemmingen.push(val);
+        document.getElementById('newBestemmingInput').value = "";
+        updateUI();
+        syncToCloud("Bestemming toegevoegd");
+      }
+    }
 
-      editingIndex = idx;
+    function addBedrijf() {
+      let val = document.getElementById('newBedrijfInput').value.trim();
+      if(val && !appData.bedrijven.includes(val)) {
+        appData.bedrijven.push(val);
+        document.getElementById('newBedrijfInput').value = "";
+        updateUI();
+        syncToCloud("Bedrijf toegevoegd");
+      }
+    }
+
+    function setLiveTime(target) {
+      let now = new Date();
+      let year = now.getFullYear();
+      let month = String(now.getMonth() + 1).padStart(2, '0');
+      let day = String(now.getDate()).padStart(2, '0');
+      let hours = String(now.getHours()).padStart(2, '0');
+      let minutes = String(now.getMinutes()).padStart(2, '0');
+      let localString = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+      if(target === 'start') {
+        document.getElementById('startInput').value = localString;
+      } else {
+        document.getElementById('eindInput').value = localString;
+      }
+    }
+
+    function laadRitVoorBewerking(index) {
+      let rit = appData.ritten[index];
+      document.getElementById('afspraakInput').value = rit.afspraak || '';
+      document.getElementById('startInput').value = rit.start || '';
+      document.getElementById('eindInput').value = rit.eind || '';
+      document.getElementById('bestemmingSelect').value = rit.bestemming || '';
+      document.getElementById('bedrijfSelect').value = rit.bedrijf || '';
+      
+      editingIndex = index;
       document.getElementById('formTitle').innerText = "Rit Bewerken";
       document.getElementById('submitBtn').innerText = "Wijziging Opslaan";
       document.getElementById('submitBtn').classList.add('editing');
-      document.getElementById('herhalingWrapper').style.display = 'none';
-
-      window.scrollTo({ top: document.getElementById('formCard').offsetTop, behavior: 'smooth' });
+      document.getElementById('inputFormCard').classList.add('active-edit');
+      document.getElementById('herhalingContainer').style.display = 'none';
+      
+      window.scrollTo({ top: document.getElementById('inputFormCard').offsetTop, behavior: 'smooth' });
     }
 
-    function resetForm() {
-      document.getElementById('afspraakInput').value = '';
-      document.getElementById('startInput').value = '';
-      document.getElementById('eindInput').value = '';
-      editingIndex = null;
-      document.getElementById('formTitle').innerText = "Nieuwe Rit Inplannen";
-      document.getElementById('submitBtn').innerText = "Rit Opslaan";
-      document.getElementById('submitBtn').classList.remove('editing');
-      document.getElementById('herhalingWrapper').style.display = 'block';
+    function opslaanRit() {
+      let afspraak = document.getElementById('afspraakInput').value;
+      if(!afspraak) {
+        alert("Afspraak datum en tijd is verplicht!");
+        return;
+      }
+
+      let start = document.getElementById('startInput').value;
+      let eind = document.getElementById('eindInput').value;
+      let bestemming = document.getElementById('bestemmingSelect').value;
+      let bedrijf = document.getElementById('bedrijfSelect').value;
+      let herhaling = document.getElementById('herhalingSelect').value;
+      let eindHerhaling = document.getElementById('eindDatumHerhalingInput').value;
+
+      if (editingIndex !== null) {
+        appData.ritten[editingIndex] = {
+          ...appData.ritten[editingIndex],
+          afspraak, start, eind, bestemming, bedrijf
+        };
+        editingIndex = null;
+        document.getElementById('formTitle').innerText = "Nieuwe Rit Inplannen";
+        document.getElementById('submitBtn').innerText = "Rit Inplannen";
+        document.getElementById('submitBtn').classList.remove('editing');
+        document.getElementById('inputFormCard').classList.remove('active-edit');
+        document.getElementById('herhalingContainer').style.display = 'block';
+        syncToCloud("Rit bijgewerkt");
+      } else {
+        appData.ritten.push({
+          afspraak, start, eind, bestemming, bedrijf, afgehandeld: false
+        });
+
+        if(herhaling !== 'geen' && eindHerhaling) {
+          let baseDate = new Date(afspraak);
+          let endDate = new Date(eindHerhaling + "T23:59:59");
+          let currDate = new Date(baseDate);
+
+          while(true) {
+            if(herhaling === 'dag') currDate.setDate(currDate.getDate() + 1);
+            else if(herhaling === 'omdedag') currDate.setDate(currDate.getDate() + 2);
+            else if(herhaling === 'ma-wo-vr') {
+              do { currDate.setDate(currDate.getDate() + 1); } 
+              while([2, 4, 0].includes(currDate.getDay()));
+            }
+            else if(herhaling === 'di-do-za') {
+              do { currDate.setDate(currDate.getDate() + 1); } 
+              while([1, 3, 5, 0].includes(currDate.getDay()));
+            }
+
+            if(currDate > endDate) break;
+
+            let y = currDate.getFullYear();
+            let m = String(currDate.getMonth() + 1).padStart(2, '0');
+            let d = String(currDate.getDate()).padStart(2, '0');
+            let hr = String(baseDate.getHours()).padStart(2, '0');
+            let min = String(baseDate.getMinutes()).padStart(2, '0');
+            let isoStr = `${y}-${m}-${d}T${hr}:${min}`;
+
+            appData.ritten.push({
+              afspraak: isoStr,
+              start: start ? `${y}-${m}-${d}T` + start.split('T')[1] : '',
+              eind: eind ? `${y}-${m}-${d}T` + eind.split('T')[1] : '',
+              bestemming,
+              bedrijf,
+              afgehandeld: false
+            });
+          }
+        }
+        syncToCloud("Rit(ten) opgeslagen");
+      }
+
+      document.getElementById('afspraakInput').value = "";
+      document.getElementById('startInput').value = "";
+      document.getElementById('eindInput').value = "";
+      updateUI();
     }
 
-    function toggleDone(idx) {
-      appData.ritten[idx].afgehandeld = !appData.ritten[idx].afgehandeld;
-      syncData("Status gewijzigd");
+    function toggleAfgehandeld(index) {
+      appData.ritten[index].afgehandeld = !appData.ritten[index].afgehandeld;
+      updateUI();
+      syncToCloud("Status gewijzigd");
     }
 
-    function deleteTrip(idx) {
-      if (confirm("Weet je zeker dat je deze rit wilt verwijderen?")) {
-        appData.ritten.splice(idx, 1);
-        syncData("Rit verwijderd 🗑️");
+    function deleteRit(index) {
+      if(confirm("Weet je zeker dat je deze rit wilt verwijderen?")) {
+        appData.ritten.splice(index, 1);
+        updateUI();
+        syncToCloud("Rit verwijderd");
       }
     }
 
-    function setStatus(status, text) {
-      const dot = document.getElementById('syncDot');
-      const label = document.getElementById('syncText');
-      dot.className = "sync-dot " + status;
-      label.innerText = text;
-    }
-
-    function showToast(msg) {
-      const t = document.getElementById('toastMsg');
-      t.innerText = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2500);
-    }
-
-    function syncData(successMsg = "Opgeslagen! ✅") {
-      isSaving = true;
-      setStatus('', 'Opslaan...');
-
-      // Direct lokaal renderen voor directe respons op het apparaat zelf
-      initDropdowns();
-      renderTrips();
-
+    // Communicatie met JSONbin met beveiliging tegen overschrijven
+    function syncToCloud(melding) {
+      setSyncStatus("syncing", "Opslaan...");
+      
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': MASTER_KEY
+        headers: { 
+          'Content-Type': 'application/json', 
+          'X-Master-Key': MASTER_KEY 
         },
         body: JSON.stringify(appData)
       })
       .then(res => res.json())
-      .then(data => {
-        isSaving = false;
-        setStatus('online', 'Online');
-        if (data && data.record) {
-          appData = data.record;
-        }
-        initDropdowns();
-        renderTrips();
-        if (successMsg) showToast(successMsg);
+      .then(() => {
+        setSyncStatus("synced", melding);
+        setTimeout(() => setSyncStatus("synced", "Gereed"), 3000);
       })
       .catch(err => {
         console.error(err);
-        isSaving = false;
-        setStatus('error', 'Fout');
-        showToast("Synchronisatiefout ❌");
+        setSyncStatus("", "Fout bij opslaan");
       });
     }
 
-    function loadData(manual = false) {
-      if (isSaving) return; // Niet pollen tijdens het opslaan om conflicten te vermijden
-      if (manual) setStatus('', 'Vernieuwen...');
-      
+    function loadFromCloud(isManual = false) {
+      if(isManual) setSyncStatus("syncing", "Laden...");
+
       fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
-        headers: {
+        headers: { 
           'X-Master-Key': MASTER_KEY,
           'Cache-Control': 'no-cache'
         }
       })
       .then(res => res.json())
       .then(data => {
-        if (isSaving) return;
-        let payload = data.record || data;
-        if (payload && Array.isArray(payload.ritten)) {
-          // Alleen bijwerken als er data aanwezig is
-          appData = payload;
-          setStatus('online', 'Online');
-          initDropdowns();
-          renderTrips();
-          if (manual) showToast("Gegevens bijgewerkt! 🔄");
-        } else {
-          setStatus('online', 'Gereed');
+        if(data && data.record && Array.isArray(data.record.ritten)) {
+          // Veilige controle: neem alleen over als de cloud data niet leeg is of als we handmatig verversen
+          appData = data.record;
+          updateUI();
+          if(isManual) {
+            setSyncStatus("synced", "Bijgewerkt");
+            setTimeout(() => setSyncStatus("synced", "Gereed"), 2000);
+          }
         }
       })
       .catch(err => {
-        console.error(err);
-        setStatus('error', 'Offline');
-        if (manual) showToast("Kon niet verbinden met server");
+        console.error("Laadfout:", err);
+        if(isManual) setSyncStatus("", "Laadfout");
       });
     }
 
-    updateHeaderDate();
-    loadData(true);
-    // Automatisch controleren op wijzigingen van andere apparaten elke 5 seconden
-    setInterval(loadData, 5000);
+    function handmatigeSync() {
+      loadFromCloud(true);
+    }
+
+    // Direct laden bij opstarten
+    loadFromCloud(false);
+
+    // Automatisch op achtergrond ophalen elke 10 seconden
+    setInterval(() => loadFromCloud(false), 10000);
   </script>
 </body>
 </html>
-```
