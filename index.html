@@ -225,6 +225,7 @@
       renderDate();
 
       let bSelect = document.getElementById('bestemmingSelect');
+      let currentB = bSelect.value;
       bSelect.innerHTML = "";
       bestemmingen.forEach(b => {
         let opt = document.createElement('option');
@@ -232,8 +233,10 @@
         opt.innerText = b;
         bSelect.appendChild(opt);
       });
+      if(currentB) bSelect.value = currentB;
 
       let cSelect = document.getElementById('bedrijfSelect');
+      let currentC = cSelect.value;
       cSelect.innerHTML = "";
       bedrijven.forEach(c => {
         let opt = document.createElement('option');
@@ -241,6 +244,7 @@
         opt.innerText = c;
         cSelect.appendChild(opt);
       });
+      if(currentC) cSelect.value = currentC;
     }
 
     function addBestemming() {
@@ -277,7 +281,8 @@
     }
 
     function fetchData() {
-      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+      // Voeg een unieke tijdstempel toe (?t=...) zodat de browser de data niet uit het geheugen laadt, maar echt van internet haalt
+      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?t=${new Date().getTime()}`, {
         headers: { 'X-Master-Key': MASTER_KEY }
       })
       .then(res => res.json())
@@ -418,6 +423,9 @@
 
     initUI();
     fetchData();
+
+    // Automatisch elke 6 seconden controleren op wijzigingen op andere apparaten
+    setInterval(fetchData, 6000);
   </script>
 </body>
 </html>
