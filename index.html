@@ -226,12 +226,16 @@
     const BIN_ID = '6ab4ec9dff5d1605329c8e3';
     const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
 
-    // Centrale data gestructureerd voor cloud synchronisatie
-    let cloudData = { 
+    // Laad direct vanuit lokale backup zodat er nooit data kan verdwijnen
+    let cloudData = JSON.parse(localStorage.getItem('taxi_app_backup')) || { 
       ritten: [], 
       bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"], 
       bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"] 
     };
+
+    function saveLocalBackup() {
+      localStorage.setItem('taxi_app_backup', JSON.stringify(cloudData));
+    }
 
     function renderDate() {
       const options = { weekday: 'short', month: 'short', day: 'numeric' };
@@ -277,6 +281,7 @@
       if(val && !cloudData.bestemmingen.includes(val)) {
         cloudData.bestemmingen.push(val);
         document.getElementById('newBestemmingInput').value = "";
+        saveLocalBackup();
         initUI();
         document.getElementById('bestemmingSelect').value = val;
         syncCloud("Bestemming toegevoegd & gesynchroniseerd! ✅");
@@ -288,6 +293,7 @@
       if(val && !cloudData.bedrijven.includes(val)) {
         cloudData.bedrijven.push(val);
         document.getElementById('newBedrijfInput').value = "";
+        saveLocalBackup();
         initUI();
         document.getElementById('bedrijfSelect').value = val;
         syncCloud("Bedrijf toegevoegd & gesynchroniseerd! ✅");
@@ -322,8 +328,11 @@
       .then(res => res.json())
       .then(data => {
         let remoteData = data.record;
-        if(remoteData && remoteData.ritten) {
+        // Alleen overschrijven als de cloud data ritten bevat (zodat een lege cloud-respons nooit lokaal de boel wist)
+        if(remoteData && Array.isArray(remoteData.ritten)) {
+          // Als de cloud data meer of evenveel ritten heeft, of als we willen updaten:
           cloudData = remoteData;
+          saveLocalBackup();
           initUI();
           updateUI();
         }
@@ -450,6 +459,7 @@
         }
       }
 
+      saveLocalBackup();
       syncCloud("Rit(ten) Opgeslagen! ✅");
       document.getElementById('afspraakInput').value = "";
       document.getElementById('startInput').value = "";
@@ -458,12 +468,14 @@
 
     function toggleAfgehandeld(index) {
       cloudData.ritten[index].afgehandeld = !cloudData.ritten[index].afgehandeld;
+      saveLocalBackup();
       syncCloud("Status bijgewerkt!");
     }
 
     function deleteRit(index) {
       if(confirm("Wil je deze rit verwijderen?")) {
         cloudData.ritten.splice(index, 1);
+        saveLocalBackup();
         syncCloud("Verwijderd! 🗑️");
       }
     }
@@ -489,11 +501,13 @@
       });
     }
 
-    // Eerste data ophalen direct bij opstarten
+    // Direct UI opbouwen met wat lokaal bekend is, daarna online controleren
+    initUI();
+    updateUI();
     fetchData();
 
-    // Automatische check elke 4 seconden om wijzigingen van het andere apparaat op te halen
-    setInterval(() => fetchData(false), 4000);
+    // Automatische check elke 5 seconden
+    setInterval(() => fetchData(false), 5000);
   </script>
 </body>
 </html>
