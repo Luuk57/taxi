@@ -16,13 +16,7 @@
       --warning: #f59e0b;
     }
     * { box-sizing: border-box; }
-    html, body {
-      width: 100%;
-      max-width: 100vw;
-      overflow-x: hidden;
-      margin: 0;
-      padding: 0;
-    }
+    html, body { width: 100%; max-width: 100vw; overflow-x: hidden; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background-color: var(--bg);
@@ -33,7 +27,6 @@
       align-items: center;
     }
     .container { width: 100%; max-width: 600px; }
-    
     .form-section {
       background: var(--card-bg);
       border: 1px solid var(--border);
@@ -43,11 +36,7 @@
       margin-bottom: 14px;
       width: 100%;
     }
-    .form-section.active-edit {
-      border-color: var(--warning);
-      background-color: #27272a;
-    }
-
+    .form-section.active-edit { border-color: var(--warning); background-color: #27272a; }
     .section-title {
       font-size: 13px;
       font-weight: 800;
@@ -61,14 +50,7 @@
       border-bottom: 1px solid var(--border);
       padding-bottom: 6px;
     }
-
-    .date-header {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--text);
-      text-transform: capitalize;
-    }
-
+    .date-header { font-size: 12px; font-weight: 700; color: var(--text); text-transform: capitalize; }
     .sync-status {
       font-size: 10px;
       padding: 3px 8px;
@@ -82,16 +64,9 @@
     }
     .sync-status.synced { background: rgba(34, 197, 94, 0.15); color: var(--success); }
     .sync-status.syncing { background: rgba(56, 189, 248, 0.15); color: var(--primary); }
+    .sync-status.error { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
     
-    label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: #94a3b8;
-      text-align: left;
-      margin-top: 8px;
-      margin-bottom: 3px;
-    }
+    label { display: block; font-size: 11px; font-weight: 600; color: #94a3b8; text-align: left; margin-top: 8px; margin-bottom: 3px; }
     input, select {
       width: 100%;
       padding: 9px;
@@ -102,74 +77,25 @@
       color: var(--text);
       margin-bottom: 4px;
     }
-    input:focus, select:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    .grid-2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-    .row-add {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 8px;
-    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .row-add { display: flex; gap: 6px; margin-bottom: 8px; }
     .row-add input { margin-bottom: 0; flex: 1; }
     .row-add button {
-      padding: 0 12px;
-      background: var(--border);
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 11px;
-      color: var(--text);
-      cursor: pointer;
-      white-space: nowrap;
+      padding: 0 12px; background: var(--border); border: none; border-radius: 8px;
+      font-weight: bold; font-size: 11px; color: var(--text); cursor: pointer; white-space: nowrap;
     }
-    .row-add button:active { background: var(--primary); color: #000; }
-
     .btn-action {
-      background: var(--primary);
-      color: #0f172a;
-      border: none;
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      margin-top: 10px;
+      background: var(--primary); color: #0f172a; border: none; width: 100%;
+      padding: 12px; border-radius: 8px; font-size: 13px; font-weight: 800; cursor: pointer; margin-top: 10px;
     }
     .btn-action.editing { background: var(--warning); color: #0f172a; }
-    .btn-action:active { transform: scale(0.98); }
-
-    .timer-row {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-      margin-bottom: 8px;
-    }
+    .timer-row { display: flex; gap: 6px; margin-top: 6px; margin-bottom: 8px; }
     .btn-start { background: var(--success); color: #fff; border: none; flex: 1; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
     .btn-stop { background: var(--danger); color: #fff; border: none; flex: 1; padding: 8px; border-radius: 6px; font-size: 11px; font-weight: bold; cursor: pointer; }
 
-    .receipt {
-      background: #0f172a;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px;
-      max-height: 300px;
-      overflow-y: auto;
-    }
-    .receipt-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 11px;
-      padding: 8px;
-      border-bottom: 1px solid var(--border);
-    }
+    .receipt { background: #0f172a; border: 1px solid var(--border); border-radius: 8px; padding: 6px; max-height: 300px; overflow-y: auto; }
+    .receipt-item { display: flex; justify-content: space-between; align-items: center; font-size: 11px; padding: 8px; border-bottom: 1px solid var(--border); }
     .receipt-item:last-child { border-bottom: none; }
     .tag { font-size: 9px; background: #334155; padding: 2px 6px; border-radius: 4px; color: var(--text); margin-right: 4px; display: inline-block; margin-top: 2px;}
     .tag-dest { background: rgba(56, 189, 248, 0.2); color: var(--primary); }
@@ -184,15 +110,14 @@
 <body>
   <div class="container">
     
-    <!-- SECTIE 1: OVERZICHT -->
     <div class="form-section">
       <div class="section-title">
         <div>
           <div style="font-size: 15px; font-weight: 900; color: var(--text);">DriveSync</div>
           <span class="date-header" id="currentDateStr">Laden...</span>
         </div>
-        <div class="sync-status" id="syncStatusIndicator" onclick="handmatigeSync()">
-          <span id="syncDot">●</span> <span id="syncText">Klaar</span>
+        <div class="sync-status synced" id="syncStatusIndicator">
+          <span id="syncDot">●</span> <span id="syncText">Lokaal veilig</span>
         </div>
       </div>
       
@@ -206,7 +131,6 @@
       </div>
     </div>
 
-    <!-- SECTIE 2: INVOER / BEWERKEN -->
     <div class="form-section" id="inputFormCard">
       <div class="section-title" id="formTitle">Nieuwe Rit Inplannen</div>
       
@@ -236,7 +160,7 @@
         <button onclick="addBestemming()">+ Voeg toe</button>
       </div>
 
-      <label>BEDRIJF / VVERVOERDER</label>
+      <label>BEDRIJF / VERVOERDER</label>
       <select id="bedrijfSelect"></select>
       <div class="row-add">
         <input type="text" id="newBedrijfInput" placeholder="Nieuw bedrijf...">
@@ -263,36 +187,27 @@
   </div>
 
   <script>
-    const BIN_ID = '6ab4ec9dff5d1605329c8e3';
-    const MASTER_KEY = '$2a$10$z00i0.yQGLewzeMwUAoiiOSlRVYrxxBvyL/8Q0SGpLP8YiVTTuTF2';
-
-    // Lokale basisstructuur
-    let appData = { 
+    // Lokale opslag als absolute basis zodat er nooit meer iets kwijtraakt
+    let appData = JSON.parse(localStorage.getItem('drivesync_data')) || { 
       ritten: [], 
       bestemmingen: ["Ziekenhuis", "Therapie", "Centrum"], 
       bedrijven: ["Taxicentrale A", "Zorgvervoer B", "Regiotaxi"] 
     };
 
     let editingIndex = null;
-    let isSyncing = false;
 
     function renderDate() {
       const options = { weekday: 'long', month: 'short', day: 'numeric' };
       document.getElementById('currentDateStr').innerText = new Date().toLocaleDateString('nl-NL', options);
     }
 
-    function setSyncStatus(status, text) {
-      let indicator = document.getElementById('syncStatusIndicator');
-      let textEl = document.getElementById('syncText');
-      textEl.innerText = text;
-      
-      indicator.className = "sync-status " + status;
+    function saveLocal() {
+      localStorage.setItem('drivesync_data', JSON.stringify(appData));
     }
 
     function initUI() {
       renderDate();
 
-      // Bestemmingen vullen behoudens selectie
       let bSelect = document.getElementById('bestemmingSelect');
       let currentB = bSelect.value;
       bSelect.innerHTML = "";
@@ -304,7 +219,6 @@
       });
       if(currentB && appData.bestemmingen.includes(currentB)) bSelect.value = currentB;
 
-      // Bedrijven vullen behoudens selectie
       let cSelect = document.getElementById('bedrijfSelect');
       let currentC = cSelect.value;
       cSelect.innerHTML = "";
@@ -319,6 +233,8 @@
 
     function updateUI() {
       initUI();
+      saveLocal();
+      
       let receiptContainer = document.getElementById('receiptList');
       let badge = document.getElementById('aantalRittenBadge');
       
@@ -345,7 +261,6 @@
               <div>
                 <span class="tag tag-dest">${item.bestemming}</span>
                 <span class="tag tag-comp">${item.bedrijf}</span>
-                ${item.start ? `<span style="font-size:9px; color:#94a3b8;">Start: ${item.start.replace('T',' ')}</span>` : ''}
               </div>
             </div>
             <div class="action-btns">
@@ -368,7 +283,6 @@
         appData.bestemmingen.push(val);
         document.getElementById('newBestemmingInput').value = "";
         updateUI();
-        syncToCloud("Bestemming toegevoegd");
       }
     }
 
@@ -378,7 +292,6 @@
         appData.bedrijven.push(val);
         document.getElementById('newBedrijfInput').value = "";
         updateUI();
-        syncToCloud("Bedrijf toegevoegd");
       }
     }
 
@@ -441,7 +354,6 @@
         document.getElementById('submitBtn').classList.remove('editing');
         document.getElementById('inputFormCard').classList.remove('active-edit');
         document.getElementById('herhalingContainer').style.display = 'block';
-        syncToCloud("Rit bijgewerkt");
       } else {
         appData.ritten.push({
           afspraak, start, eind, bestemming, bedrijf, afgehandeld: false
@@ -483,7 +395,6 @@
             });
           }
         }
-        syncToCloud("Rit(ten) opgeslagen");
       }
 
       document.getElementById('afspraakInput').value = "";
@@ -495,76 +406,17 @@
     function toggleAfgehandeld(index) {
       appData.ritten[index].afgehandeld = !appData.ritten[index].afgehandeld;
       updateUI();
-      syncToCloud("Status gewijzigd");
     }
 
     function deleteRit(index) {
       if(confirm("Weet je zeker dat je deze rit wilt verwijderen?")) {
         appData.ritten.splice(index, 1);
         updateUI();
-        syncToCloud("Rit verwijderd");
       }
     }
 
-    // Communicatie met JSONbin met beveiliging tegen overschrijven
-    function syncToCloud(melding) {
-      setSyncStatus("syncing", "Opslaan...");
-      
-      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-        method: 'PUT',
-        headers: { 
-          'Content-Type': 'application/json', 
-          'X-Master-Key': MASTER_KEY 
-        },
-        body: JSON.stringify(appData)
-      })
-      .then(res => res.json())
-      .then(() => {
-        setSyncStatus("synced", melding);
-        setTimeout(() => setSyncStatus("synced", "Gereed"), 3000);
-      })
-      .catch(err => {
-        console.error(err);
-        setSyncStatus("", "Fout bij opslaan");
-      });
-    }
-
-    function loadFromCloud(isManual = false) {
-      if(isManual) setSyncStatus("syncing", "Laden...");
-
-      fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest?nocache=` + new Date().getTime(), {
-        headers: { 
-          'X-Master-Key': MASTER_KEY,
-          'Cache-Control': 'no-cache'
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if(data && data.record && Array.isArray(data.record.ritten)) {
-          // Veilige controle: neem alleen over als de cloud data niet leeg is of als we handmatig verversen
-          appData = data.record;
-          updateUI();
-          if(isManual) {
-            setSyncStatus("synced", "Bijgewerkt");
-            setTimeout(() => setSyncStatus("synced", "Gereed"), 2000);
-          }
-        }
-      })
-      .catch(err => {
-        console.error("Laadfout:", err);
-        if(isManual) setSyncStatus("", "Laadfout");
-      });
-    }
-
-    function handmatigeSync() {
-      loadFromCloud(true);
-    }
-
-    // Direct laden bij opstarten
-    loadFromCloud(false);
-
-    // Automatisch op achtergrond ophalen elke 10 seconden
-    setInterval(() => loadFromCloud(false), 10000);
+    // Direct starten
+    updateUI();
   </script>
 </body>
 </html>
